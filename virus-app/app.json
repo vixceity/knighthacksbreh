@@ -33,7 +33,13 @@
           "imageWidth": 76
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to show your location on the home screen."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,10 +1,11 @@
 import * as Device from 'expo-device';
 import { Link } from 'expo-router';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { HintRow } from '@/components/hint-row';
+import { LocationCard } from '@/components/location-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
@@ -33,12 +34,15 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.content} style={styles.scrollView}>
         <ThemedView style={styles.heroSection}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
             Welcome to&nbsp;Expo
           </ThemedText>
         </ThemedView>
+
+        <LocationCard />
 
         <Link href="/lockdown" asChild>
           <Pressable
@@ -65,6 +69,7 @@ export default function HomeScreen() {
         </ThemedView>
 
         {Platform.OS === 'web' && <WebBadge />}
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -93,6 +98,13 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+    maxWidth: MaxContentWidth,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
     paddingHorizontal: Spacing.four,
     alignItems: 'center',
     gap: Spacing.three,
@@ -102,7 +114,7 @@ const styles = StyleSheet.create({
   heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    paddingVertical: Spacing.four,
     paddingHorizontal: Spacing.four,
     gap: Spacing.four,
   },

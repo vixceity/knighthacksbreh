@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, AppState, Platform, Pressable, StyleSheet } from 'react-native';
 
 import LocationMap from '@/components/location-map';
@@ -9,11 +9,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 
-export function LocationCard() {
+export function LocationCard({ onLocationChange }: { onLocationChange?: (location: Location.LocationObject | null) => void }) {
   const [attempt, setAttempt] = useState(0);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => { onLocationChange?.(error ? null : location); }, [location, error, onLocationChange]);
 
   useFocusEffect(useCallback(() => {
     let active = true;

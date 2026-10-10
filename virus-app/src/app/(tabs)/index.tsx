@@ -1,4 +1,7 @@
 import * as Device from 'expo-device';
+import { useState } from 'react';
+import type { LocationObject } from 'expo-location';
+import { ClassSchedule } from '@/components/class-schedule';
 import { Link } from 'expo-router';
 import { Platform, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,18 +34,22 @@ function getDevMenuHint() {
 }
 
 export default function HomeScreen() {
+  const [position, setPosition] = useState<LocationObject | null>(null);
+  const [absent, setAbsent] = useState(false);
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, absent && { backgroundColor: '#B91C1C' }]}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} style={styles.scrollView}>
-        <ThemedView style={styles.heroSection}>
+        {absent && <Text accessibilityRole="alert" style={styles.alert}>You are not at your scheduled class!</Text>}
+        <ThemedView style={[styles.heroSection, absent && { backgroundColor: 'transparent' }]}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
             Welcome to&nbsp;Expo
           </ThemedText>
         </ThemedView>
 
-        <LocationCard />
+        <LocationCard onLocationChange={setPosition} />
+        <ClassSchedule position={position} onAbsent={setAbsent} />
 
         <Link href="/lockdown" asChild>
           <Pressable
@@ -76,6 +83,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  alert: { color: '#FFFFFF', fontSize: 22, fontWeight: 'bold', paddingTop: 20, textAlign: 'center' },
   demoButton: {
     backgroundColor: '#2563EB',
     paddingHorizontal: 24,

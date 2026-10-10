@@ -1,5 +1,6 @@
 import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
+import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
@@ -39,6 +40,14 @@ export default function HomeScreen() {
           </ThemedText>
         </ThemedView>
 
+        <Link href="/lockdown" asChild>
+          <Pressable
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.demoButton, pressed && styles.demoButtonPressed]}>
+            <Text style={styles.demoButtonText}>Open Lockdown Demo</Text>
+          </Pressable>
+        </Link>
+
         <ThemedText type="code" style={styles.code}>
           get started
         </ThemedText>
@@ -62,6 +71,21 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  demoButton: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  demoButtonPressed: {
+    opacity: 0.75,
+  },
+  demoButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

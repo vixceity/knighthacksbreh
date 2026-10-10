@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type { LocationObject } from 'expo-location';
 import { ClassSchedule } from '@/components/class-schedule';
 import { Link } from 'expo-router';
-import { Platform, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AnimatedIcon } from '@/components/animated-icon';
@@ -13,25 +13,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
 
 export default function HomeScreen() {
   const [position, setPosition] = useState<LocationObject | null>(null);
@@ -44,7 +25,7 @@ export default function HomeScreen() {
         <ThemedView style={[styles.heroSection, absent && { backgroundColor: 'transparent' }]}>
           <AnimatedIcon />
           <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+            My day
           </ThemedText>
         </ThemedView>
 
@@ -55,27 +36,10 @@ export default function HomeScreen() {
           <Pressable
             accessibilityRole="button"
             style={({ pressed }) => [styles.demoButton, pressed && styles.demoButtonPressed]}>
-            <Text style={styles.demoButtonText}>Open Lockdown Demo</Text>
+            <Text style={styles.demoButtonText}>Lockdown demo</Text>
           </Pressable>
         </Link>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

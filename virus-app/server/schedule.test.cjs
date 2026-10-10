@@ -5,13 +5,28 @@ const image = 'data:image/png;base64,aGVsbG8=';
 async function run(options, callback) {
   const server = createServer(options);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const url = `http://127.0.0.1:${server.address().port}/import-schedule`;
+  const url = `http://127.0.0.1:${server.address().port}${options.path || '/import-schedule'}`;
   try { await callback((body, headers = {}) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) })); }
   finally { await new Promise(resolve => server.close(resolve)); }
 }
 test('missing key returns actionable error', async () => {
   await run({ apiKey: '' }, async post => {
     const response = await post({ image }); assert.equal(response.status, 503);
+  });
+});
+test('plain text plan uses supplied local date and defaults to an hour', async () => {
+  await run({ path: '/parse-plan', apiKey: 'test', fetchImpl: async (_url, options) => {
+    const body = JSON.parse(options.body);
+    assert.equal(JSON.parse(body.contents[0].parts[0].text).today, '2026-10-10');
+    assert.ok(body.generationConfig.responseJsonSchema.properties.classes.items.required.includes('date'));
+    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ classes: [{ name: 'Study', place: 'ENG2', campus: '', building: 'ENG2', date: '2026-10-11', days: [], start: '19:00', end: '' }] }) }] } }] });
+  } }, async post => {
+    const response = await post({ text: 'Study in ENG2 at 7pm tomorrow', today: '2026-10-10' });
+    assert.equal(response.status, 200);
+    const event = (await response.json()).classes[0];
+    assert.equal(event.date, '2026-10-11');
+    assert.equal(event.end, '20:00');
+    assert.deepEqual(event.days, [0]);
   });
 });
 test('rejects untrusted origins and non-image inputs before AI call', async () => {

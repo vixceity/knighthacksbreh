@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Button, Image, Platform, View } from 'react-native';
 import { ThemedText } from './themed-text';
 
-export type ImportedClass = { name: string; place: string; days: number[]; start: string; end: string; campus?: string; building?: string; latitude?: number | null; longitude?: number | null; matchedAddress?: string; locationStatus?: string };
+export type ImportedClass = { date?: string; name: string; place: string; days: number[]; start: string; end: string; campus?: string; building?: string; latitude?: number | null; longitude?: number | null; matchedAddress?: string; locationStatus?: string };
 export function ScheduleImport({ onImport, disabled }: { onImport: (classes: ImportedClass[]) => void; disabled: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -43,9 +43,9 @@ export function ScheduleImport({ onImport, disabled }: { onImport: (classes: Imp
     } finally { setBusy(false); }
   }
   return <View style={{ gap: 10 }}>
-    <ThemedText type="smallBold">Import a schedule screenshot</ThemedText>
-    <ThemedText type="small">Your selected screenshot is sent to Google Gemini to read class names, days, times, and rooms. Review each class before saving.</ThemedText>
-    <Button title={busy ? 'Reading screenshot…' : 'Choose schedule screenshot'} disabled={busy || disabled} onPress={() => void pick()} />
+    <ThemedText type="smallBold">Import schedule</ThemedText>
+    <ThemedText type="small">Screenshots are read by Gemini. Review before saving.</ThemedText>
+    <Button title={busy ? 'Reading screenshot…' : 'Choose screenshot'} disabled={busy || disabled} onPress={() => void pick()} />
     {busy && <ActivityIndicator accessibilityLabel="Reading schedule" />}
     {preview && <Image source={{ uri: preview }} resizeMode="contain" accessibilityLabel="Selected schedule screenshot" style={{ width: '100%', height: 180 }} />}
     {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}

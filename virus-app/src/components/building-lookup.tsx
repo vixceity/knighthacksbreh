@@ -34,11 +34,10 @@ export function BuildingLookup({ initialCampus, initialBuilding, onFound }: {
   }
   const inputStyle = { color: theme.text, borderColor: '#8C9BB0', borderWidth: 1, borderRadius: 8, padding: 12 };
   return <View style={{ gap: 10 }}>
-    <ThemedText type="smallBold">Find your class building</ThemedText>
-    <ThemedText type="small">Enter your college and campus/city. We use the building read from your screenshot to find its coordinates.</ThemedText>
+    <ThemedText type="smallBold">Find location</ThemedText>
     <ThemedText>College / campus</ThemedText>
-    <TextInput accessibilityLabel="College or campus" editable={!busy} value={campus} onChangeText={setCampus} style={inputStyle} placeholder="Enter your college / campus" placeholderTextColor="#8793A5" />
-    <ThemedText type="small">{building ? `Building from screenshot: ${building}` : 'No building could be read. Import a clearer screenshot that includes class locations.'}</ThemedText>
+    <TextInput accessibilityLabel="College or campus" editable={!busy} value={campus} onChangeText={setCampus} style={inputStyle} />
+    <ThemedText type="small">{building ? `Building: ${building}` : 'Building missing. Try a clearer screenshot.'}</ThemedText>
     <Button title={busy ? 'Finding building…' : 'Find building'} disabled={busy || !campus.trim() || !building.trim()} onPress={() => void lookup()} />
     {!!message && <ThemedText accessibilityLiveRegion="polite">{message}</ThemedText>}
   </View>;

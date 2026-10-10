@@ -1,11 +1,23 @@
 export type ClassEntry = {
   id: string; name: string; place: string; days: number[];
   start: string; end: string; latitude: number; longitude: number; radius: number;
+  date?: string;
 };
 export type Position = { timestamp: number; coords: { latitude: number; longitude: number; accuracy: number | null } };
 export const minutes = (time: string) => Number(time.split(':')[0]) * 60 + Number(time.split(':')[1]);
+export const localDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+export function validDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && localDate(new Date(`${value}T12:00:00`)) === value;
+}
+export function overlaps(a: ClassEntry, b: ClassEntry) {
+  const sameDay = a.date && b.date ? a.date === b.date : a.date
+    ? b.days.includes(new Date(`${a.date}T12:00:00`).getDay()) : b.date
+      ? a.days.includes(new Date(`${b.date}T12:00:00`).getDay()) : a.days.some(day => b.days.includes(day));
+  return sameDay && a.start < b.end && a.end > b.start;
+}
 export function validClass(value: ClassEntry): boolean {
   return !!value && typeof value.id === 'string' && typeof value.name === 'string' && !!value.name.trim()
+    && (value.date === undefined || validDate(value.date))
     && typeof value.place === 'string' && !!value.place.trim() && Array.isArray(value.days) && value.days.length > 0
     && value.days.every(day => Number.isInteger(day) && day >= 0 && day <= 6)
     && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.start) && /^([01]\d|2[0-3]):[0-5]\d$/.test(value.end)
@@ -16,7 +28,7 @@ export function validClass(value: ClassEntry): boolean {
 }
 export function attendance(entry: ClassEntry, position: Position | null, now: Date) {
   const time = now.getHours() * 60 + now.getMinutes();
-  if (!entry.days.includes(now.getDay()) || time < minutes(entry.start) || time >= minutes(entry.end)) return 'inactive';
+  if ((entry.date ? entry.date !== localDate(now) : !entry.days.includes(now.getDay())) || time < minutes(entry.start) || time >= minutes(entry.end)) return 'inactive';
   if (!position || now.getTime() - position.timestamp > 30000 || position.coords.accuracy == null) return 'unknown';
   const radians = (degrees: number) => degrees * Math.PI / 180;
   const a = Math.sin(radians(entry.latitude - position.coords.latitude) / 2) ** 2

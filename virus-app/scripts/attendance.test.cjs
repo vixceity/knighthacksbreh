@@ -28,3 +28,13 @@ test('validate times, coordinates, days, and radius', () => {
     assert.equal(validClass({ ...entry, ...change }), false);
   }
 });
+
+test('one-time attendance does not repeat the following week', () => {
+  const once = { ...entry, date: '2026-10-12' };
+  assert.equal(attendance(once, position, now), 'present');
+  const nextWeek = new Date(2026, 9, 19, 10, 0);
+  assert.equal(attendance(once, { ...position, timestamp: nextWeek.getTime() }, nextWeek), 'inactive');
+  assert.equal(context.exports.overlaps(once, { ...entry, date: '2026-10-19' }), false);
+  assert.equal(context.exports.overlaps(once, entry), true);
+  assert.equal(validClass({ ...once, date: '2026-02-30' }), false);
+});

@@ -30,6 +30,9 @@ export function ScheduleImport({ onImport, disabled, renderTrigger, onBusyChange
   const [preview, setPreview] = useState<string | null>(null);
 
   async function pick() {
+    if (disabled || busy) return;
+    setBusy(true);
+    onBusyChange?.(true);
     setError('');
     setPreview(null);
     try {
@@ -41,8 +44,6 @@ export function ScheduleImport({ onImport, disabled, renderTrigger, onBusyChange
       const mime = Platform.OS === 'web' ? asset.mimeType : 'image/jpeg';
       if (!mime || !['image/png', 'image/jpeg', 'image/webp'].includes(mime)) throw new Error('Choose a PNG, JPEG, or WebP screenshot.');
       setPreview(asset.uri);
-      setBusy(true);
-      onBusyChange?.(true);
       const base = process.env.EXPO_PUBLIC_SCHEDULE_API_URL || (Platform.OS === 'web' ? 'http://localhost:3001' : '');
       if (!base) throw new Error('Configure EXPO_PUBLIC_SCHEDULE_API_URL to your computer’s import server address, then restart Expo.');
       const controller = new AbortController();

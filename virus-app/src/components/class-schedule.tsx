@@ -194,7 +194,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
   }
 
   function closeEditor() {
-    if (saving) return;
+    if (saving || importing) return;
     Keyboard.dismiss();
     setEditorOpen(false);
   }
@@ -252,6 +252,25 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={24} tintColor="#FFFFFF" />
           <Text style={styles.primaryButtonText}>{imports.length ? 'Continue reviewing classes' : 'Add class'}</Text>
         </Pressable>
+
+      </View>
+      <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
+        <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
+          <SafeAreaView style={[styles.modal, { backgroundColor: theme.background }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText type="smallBold">{imports.length ? importSource === 'plan' ? 'Review plan' : 'Review schedule' : 'Add class'}</ThemedText>
+              <Pressable accessibilityRole="button" accessibilityLabel="Back to classes" disabled={saving || importing}
+                accessibilityState={{ disabled: saving || importing }} hitSlop={8} onPress={closeEditor}
+                style={({ pressed }) => [styles.backButton, (pressed || saving || importing) && styles.pressed]}>
+                <View pointerEvents="none">
+                  <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} size={20} tintColor="#5A9CFF" />
+                </View>
+                <Text style={styles.backButtonText}>Back</Text>
+              </Pressable>
+            </View>
+            <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editor}>
+                {!imports.length && <View style={styles.formSection}>
         <ScheduleImport disabled={!ready || saving || importing}
           onImport={items => { setImportSource('screenshot'); setImports(items); loadDraft(items[0]); setEditorOpen(true); }}
           onBusyChange={setImporting}
@@ -262,24 +281,6 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
               <Text style={styles.secondaryButtonText}>{busy ? 'Reading screenshot...' : 'Import schedule screenshot'}</Text>
             </Pressable>
           )} />
-      </View>
-      <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
-        <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
-          <SafeAreaView style={[styles.modal, { backgroundColor: theme.background }]}>
-            <View style={styles.modalHeader}>
-              <ThemedText type="smallBold">{imports.length ? importSource === 'plan' ? 'Review plan' : 'Review schedule' : 'Add class'}</ThemedText>
-              <Pressable accessibilityRole="button" accessibilityLabel="Back to classes" disabled={saving}
-                accessibilityState={{ disabled: saving }} hitSlop={8} onPress={closeEditor}
-                style={({ pressed }) => [styles.backButton, (pressed || saving) && styles.pressed]}>
-                <View pointerEvents="none">
-                  <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} size={20} tintColor="#5A9CFF" />
-                </View>
-                <Text style={styles.backButtonText}>Back</Text>
-              </Pressable>
-            </View>
-            <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editor}>
-                {!imports.length && <View style={styles.formSection}>
                   <PlanInput disabled={!ready || saving || importing} onBusyChange={setImporting}
                     onPlan={plan => { setImportSource('plan'); setImports([plan]); loadDraft(plan); }} />
                 </View>}

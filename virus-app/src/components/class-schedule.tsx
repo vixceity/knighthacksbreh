@@ -16,6 +16,19 @@ import { type ClassEntry, type Position, attendance, validClass, overlaps } from
 
 const KEY = 'class-schedule-v1';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MAX_QUEUED_REMINDERS = 60;
+const REMINDER_MESSAGES = [
+  (place: string, radius: number) => `CLASS IS IN SESSION. Get to ${place} now; the check-in zone is ${radius} m.`,
+  (place: string, radius: number) => `Still outside the ${radius} m zone. Stop scrolling and move toward ${place}.`,
+  (place: string, radius: number) => `Another minute out of class. Head to ${place} right now.`,
+  (place: string, radius: number) => `Your class is happening NOW. Get inside the ${radius} m zone at ${place}.`,
+  (place: string, radius: number) => `This is your attendance reminder. Go to ${place} now.`,
+  (place: string, radius: number) => `You're still not at ${place}. The class is already underway.`,
+];
+
+function reminderBody(place: string, radius: number, index: number) {
+  return REMINDER_MESSAGES[index % REMINDER_MESSAGES.length](place, radius);
+}
 
 function EditorAction({ title, onPress, disabled = false, primary = false }: {
   title: string;
@@ -98,28 +111,38 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           setReminderStatus('Notifications are off. Enable them for Expo Go in your device settings.');
           return;
         }
-        const content = {
-          title: `${absentClass.name} is in progress`,
-          body: `You appear to be outside the ${absentClass.radius} m check-in area for ${absentClass.place}. Open the app to refresh your location and stop reminders after arrival.`,
+        const channel = Platform.OS === 'android' ? { channelId: 'class-attendance' } : {};
+        const notificationIds: string[] = [];
+        const content = (index: number) => ({
+          title: `${absentClass.name}: GET TO CLASS NOW`,
+          body: reminderBody(absentClass.place, absentClass.radius, index),
           data: { type: 'class-attendance', classId: absentClass.id },
           sound: true,
-        };
-        const channel = Platform.OS === 'android' ? { channelId: 'class-attendance' } : {};
-        const immediateId = await Notifications.scheduleNotificationAsync({ content, trigger: null });
-        const repeatingId = await Notifications.scheduleNotificationAsync({
-          content,
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds: 60,
-            repeats: true,
-            ...channel,
-          },
         });
+        const immediateId = await Notifications.scheduleNotificationAsync({ content: content(0), trigger: null });
+        notificationIds.push(immediateId);
+        const firstRepeatAt = Date.now() + 60_000;
+        const classDate = absentClass.date || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const [endHour, endMinute] = absentClass.end.split(':').map(Number);
+        const classEnd = new Date(`${classDate}T00:00:00`);
+        classEnd.setHours(endHour, endMinute, 0, 0);
+        const repeatCount = Math.min(MAX_QUEUED_REMINDERS, Math.max(0, Math.ceil((classEnd.getTime() - firstRepeatAt) / 60_000)));
+        for (let index = 0; index < repeatCount; index++) {
+          const notificationId = await Notifications.scheduleNotificationAsync({
+            content: content(index + 1),
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: new Date(firstRepeatAt + index * 60_000),
+              ...channel,
+            },
+          });
+          notificationIds.push(notificationId);
+        }
         if (active) {
-          reminderRef.current = { classId: absentClass.id, notificationIds: [immediateId, repeatingId] };
-          setReminderStatus(`Reminder active for ${absentClass.name}. Repeats every 60 seconds while you are outside the ${absentClass.radius} m radius.`);
+          reminderRef.current = { classId: absentClass.id, notificationIds };
+          setReminderStatus(`Urgent class reminders scheduled every 60 seconds through class end (${repeatCount} follow-ups queued).`);
         } else {
-          await Promise.all([immediateId, repeatingId].map(notificationId => Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {})));
+          await Promise.all(notificationIds.map(notificationId => Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {})));
         }
       } catch {
         setReminderStatus('Could not schedule a reminder. Check Expo Go notification permissions and try again.');

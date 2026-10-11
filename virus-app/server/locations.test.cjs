@@ -55,3 +55,9 @@ test('ambiguous, missing-campus, and unavailable lookups leave coordinates blank
   const [result] = await resolveLocations([entry], { apiKey: '' });
   assert.equal(result.latitude, null);
 });
+
+test('missing campus defaults to UCF and preserves explicit campuses', async () => {
+  const result = await resolveLocations([{ campus: '', building: '' }, { campus: 'Chosen University', building: '' }], { apiKey: '' });
+  assert.equal(result[0].campus, normalizeCampus('UCF'));
+  assert.equal(result[1].campus, 'Chosen University');
+});

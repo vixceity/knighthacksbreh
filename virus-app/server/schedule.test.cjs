@@ -19,7 +19,7 @@ test('plain text plan uses supplied local date and defaults to an hour', async (
     const body = JSON.parse(options.body);
     assert.equal(JSON.parse(body.contents[0].parts[0].text).today, '2026-10-10');
     assert.ok(body.generationConfig.responseJsonSchema.properties.classes.items.required.includes('date'));
-    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ classes: [{ name: 'Study', place: 'ENG2', campus: '', building: 'ENG2', date: '2026-10-11', days: [], start: '19:00', end: '' }] }) }] } }] });
+    return Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ classes: [{ name: 'Study', place: 'ENG2', campus: '', building: 'ENG2', date: '2026-10-11', start: '19:00', end: '' }] }) }] } }] });
   } }, async post => {
     const response = await post({ text: 'Study in ENG2 at 7pm tomorrow', today: '2026-10-10' });
     assert.equal(response.status, 200);
@@ -56,3 +56,19 @@ test('refusal or malformed output never becomes a schedule', async () => {
     assert.equal((await post({ image })).status, 422);
   });
 });
+
+for (const [label, result] of [
+  ['incomplete', { candidates: [{ finishReason: 'MAX_TOKENS' }] }],
+  ['invalid JSON', { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: 'invalid' }] } }] }],
+  ['invalid event', { candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{"classes":null}' }] } }] }],
+]) {
+  test('plan errors describe plans: ' + label, async () => {
+    await run({ path: '/parse-plan', apiKey: 'test', fetchImpl: async () => Response.json(result) }, async post => {
+      const response = await post({ text: 'Study tomorrow at 7pm', today: '2026-10-10' });
+      assert.equal(response.status, 422);
+      const { error } = await response.json();
+      assert.match(error, /plan/i);
+      assert.doesNotMatch(error, /screenshot/i);
+    });
+  });
+}

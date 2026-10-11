@@ -1,42 +1,36 @@
+import { LOCKDOWN_APPS, useLockdownApps } from '@/hooks/use-lockdown-apps';
 
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
+  ScrollView,
   Text,
   Pressable,
   StyleSheet,
 } from "react-native";
 
-const APPS = ["Instagram", "TikTok", "YouTube", "Games"];
+import { MaxContentWidth } from '@/constants/theme';
+
 
 export default function LockdownDemo() {
-  const [selected, setSelected] = useState<string[]>([
-    "Instagram",
-    "TikTok",
-  ]);
-  const [locked, setLocked] = useState(false);
-  const [openedApp, setOpenedApp] = useState<string | null>(null);
-
-  function toggleApp(app: string) {
-    setSelected((prev) =>
-      prev.includes(app)
-        ? prev.filter((item) => item !== app)
-        : [...prev, app]
-    );
-  }
+  const { apps: selected, ready, error, toggleApp } = useLockdownApps();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Late Lockdown</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+      <Text style={styles.title}>Lockdown Options</Text>
 
       <Text style={styles.subtitle}>
-        Choose apps to restrict when you're late.
+        Choose which apps to lock down during class.
       </Text>
 
-      {APPS.map((app) => (
+      {LOCKDOWN_APPS.map((app) => (
         <Pressable
           key={app}
-          style={styles.appRow}
+          disabled={!ready}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: selected.includes(app), disabled: !ready }}
+          style={({ pressed }) => [styles.appRow, pressed && styles.pressed]}
           onPress={() => toggleApp(app)}
         >
           <Text style={styles.appName}>{app}</Text>
@@ -46,61 +40,10 @@ export default function LockdownDemo() {
         </Pressable>
       ))}
 
-      <Pressable
-        style={styles.button}
-        onPress={() => {
-          setLocked(!locked);
-          setOpenedApp(null);
-        }}
-      >
-        <Text style={styles.buttonText}>
-          {locked ? "End Lockdown" : "Simulate Being Late"}
-        </Text>
-      </Pressable>
+      {!!error && <Text accessibilityRole="alert" style={styles.error}>{error}</Text>}
+      <Text style={styles.subtitle}>{ready ? 'Choices save automatically.' : 'Loading choices...'}</Text>
 
-      {locked && (
-        <View style={styles.demo}>
-          <Text style={styles.demoTitle}>
-            Try opening an app:
-          </Text>
-
-          {selected.map((app) => (
-            <Pressable
-              key={app}
-              style={styles.fakeApp}
-              onPress={() => setOpenedApp(app)}
-            >
-              <Text style={styles.fakeAppText}>
-                {app}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
-
-      {openedApp && (
-        <View style={styles.overlay}>
-          <Text style={styles.lockIcon}>🔒</Text>
-
-          <Text style={styles.blockTitle}>
-            App Restricted
-          </Text>
-
-          <Text style={styles.blockDescription}>
-            {openedApp} is unavailable because
-            you're late to class!
-          </Text>
-
-          <Pressable
-            style={styles.button}
-            onPress={() => setOpenedApp(null)}
-          >
-            <Text style={styles.buttonText}>
-              Back to Demo
-            </Text>
-          </Pressable>
-        </View>
-      )}
+      </ScrollView>
     </View>
   );
 }
@@ -108,85 +51,47 @@ export default function LockdownDemo() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#101827",
+    backgroundColor: "#0B0B0C",
+  },
+  content: {
+    flexGrow: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
     padding: 24,
-    paddingTop: 70,
+    paddingBottom: 48,
   },
   title: {
-    color: "white",
-    fontSize: 30,
+    color: "#F5F5F7",
+    fontSize: 32,
+    lineHeight: 38,
     fontWeight: "bold",
   },
   subtitle: {
-    color: "#9CA3AF",
+    color: "#9B9BA2",
     marginTop: 8,
     marginBottom: 24,
   },
   appRow: {
     padding: 18,
+    minHeight: 60,
+    alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#2A2A2D",
     marginBottom: 10,
-    backgroundColor: "#1F2937",
-    borderRadius: 12,
+    backgroundColor: "#171719",
+    borderRadius: 8,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   appName: {
-    color: "white",
+    color: "#F5F5F7",
     fontSize: 17,
   },
   check: {
-    color: "#60A5FA",
+    color: "#5A9CFF",
     fontSize: 22,
   },
-  button: {
-    backgroundColor: "#2563EB",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  demo: {
-    marginTop: 24,
-  },
-  demoTitle: {
-    color: "white",
-    fontSize: 18,
-    marginBottom: 12,
-  },
-  fakeApp: {
-    backgroundColor: "#374151",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 8,
-  },
-  fakeAppText: {
-    color: "white",
-    fontSize: 16,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "#111827",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 30,
-  },
-  lockIcon: {
-    fontSize: 60,
-  },
-  blockTitle: {
-    color: "white",
-    fontSize: 28,
-    fontWeight: "bold",
-    marginTop: 20,
-  },
-  blockDescription: {
-    color: "#9CA3AF",
-    fontSize: 16,
-    textAlign: "center",
-    marginTop: 12,
-  },
+  pressed: { opacity: 0.65 },
+  error: { color: '#FCA5A5', marginTop: 12 },
 });

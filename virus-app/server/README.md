@@ -11,3 +11,5 @@ This server is for local development. Do not expose it publicly without authenti
 Implementation references: https://ai.google.dev/gemini-api/docs/image-understanding and https://ai.google.dev/gemini-api/docs/structured-output.
 
 Automatic building coordinates: Gemini extracts campus clues and building names from the screenshot. Set GOOGLE_MAPS_API_KEY in server/.env to a server key with Places API (New) enabled and billing configured. Building names are looked up with Google Places Text Search. Ambiguous or unavailable matches remain blank. Users must review the suggested location in Google Maps and confirm it before saving. The Gemini key alone does not enable Places lookups.
+
+When a plan or screenshot omits the college, it defaults to UCF Main Campus. Explicit colleges are preserved.

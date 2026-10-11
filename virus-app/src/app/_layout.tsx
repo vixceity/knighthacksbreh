@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -13,9 +14,10 @@ export default function TabLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
+      <StatusBar style="light" />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="lockdown" options={{ title: 'Lockdown Demo' }} />
+        <Stack.Screen name="lockdown" options={{ title: 'Lockdown Options', headerStyle: { backgroundColor: '#0B0B0C' }, headerTintColor: '#F5F5F7', headerShadowVisible: false }} />
       </Stack>
     </ThemeProvider>
   );

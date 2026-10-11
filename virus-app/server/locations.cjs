@@ -47,8 +47,8 @@ function chooseBuilding(places, building, campus) {
 async function resolveLocations(classes, { fetchImpl = fetch, apiKey = process.env.GOOGLE_MAPS_API_KEY } = {}) {
   const cache = new Map();
   return Promise.all(classes.map(async original => {
-    const entry = { ...original, campus: normalizeCampus(original.campus) };
-    const unresolved = { ...entry, latitude: null, longitude: null, locationStatus: 'Enter the campus and building coordinates manually.' };
+    const entry = { ...original, campus: normalizeCampus(original.campus) || normalizeCampus('UCF') };
+    const unresolved = { ...entry, latitude: null, longitude: null, locationStatus: 'Enter the college and building to find the location.' };
     if (!entry.campus || !entry.building) return unresolved;
     if (!apiKey) return { ...unresolved, locationStatus: `Detected ${entry.campus}. Automatic lookup needs GOOGLE_MAPS_API_KEY on the server.` };
     const building = normalizeBuilding(entry.building, entry.campus);

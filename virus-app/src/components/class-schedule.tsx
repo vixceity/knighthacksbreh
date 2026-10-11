@@ -1,3 +1,4 @@
+import { ScheduleDate } from './schedule-date';
 import { displayTime, parseTime } from '@/utils/time';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
@@ -24,6 +25,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
   const [now, setNow] = useState(new Date());
   const [days, setDays] = useState<number[]>([1]);
   const [imports, setImports] = useState<ImportedClass[]>([]);
+  const [importSource, setImportSource] = useState<'screenshot' | 'plan'>('screenshot');
   const [details, setDetails] = useState(false);
   const [eventDate, setEventDate] = useState<string | undefined>();
   const [locationConfirmed, setLocationConfirmed] = useState(false);
@@ -48,7 +50,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
   }
   async function add() {
     if (imports.length && !locationConfirmed) { setError('Confirm the class location before saving.'); return; }
-    const entry = { ...form, name: form.name.trim(), place: form.place.trim(), id: `${Date.now()}`, days, ...(eventDate ? { date: eventDate } : {}),
+    const entry = { ...form, name: form.name.trim(), place: form.place.trim(), id: `${Date.now()}`, days: eventDate ? [new Date(`${eventDate}T12:00:00`).getDay()] : days, ...(eventDate ? { date: eventDate } : {}),
       start: parseTime(form.start), end: parseTime(form.end), latitude: Number(form.latitude), longitude: Number(form.longitude), radius: Number(form.radius) };
     if (!form.latitude.trim() || !form.longitude.trim() || !validClass(entry)) {
       setError('Enter a class and location name, choose days, use AM/PM times (end after start), valid coordinates, and a radius of 20–5000 meters.'); return;
@@ -96,7 +98,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           <View style={styles.classInfo}>
             <Text style={styles.emptyTitle}>{entry.name}</Text>
             <Text style={styles.secondaryText}>{entry.place}</Text>
-            <Text style={styles.secondaryText}>{entry.date ? `${entry.date} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} | {displayTime(entry.start)} - {displayTime(entry.end)}</Text>
+            <Text style={styles.secondaryText}>{entry.date ? `${new Date(entry.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} | {displayTime(entry.start)} - {displayTime(entry.end)}</Text>
             <Text accessibilityLiveRegion="polite" style={[styles.secondaryText, status === 'absent' && styles.absentText, status === 'present' && styles.presentText]}>
               {status === 'absent' ? 'Not at class - head to your classroom' : status === 'present' ? 'At class' : status === 'unknown' ? 'Waiting for an accurate location' : 'Not in session'}
             </Text>
@@ -116,8 +118,23 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={24} tintColor="#FFFFFF" />
           <Text style={styles.primaryButtonText}>{imports.length ? 'Continue reviewing classes' : 'Add class'}</Text>
         </Pressable>
-        <ScheduleImport disabled={!ready || saving || importing || imports.length > 0}
-          onImport={items => { setImports(items); loadDraft(items[0]); setEditorOpen(true); }}
+
+      </View>
+      <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
+        <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
+          <SafeAreaView style={styles.modal}>
+            <View style={styles.modalHeader}>
+              <ThemedText type="smallBold">{imports.length ? 'Review event' : 'Add class'}</ThemedText>
+              <Pressable accessibilityRole="button" accessibilityLabel="Exit to main menu" disabled={saving}
+                accessibilityState={{ disabled: saving }} hitSlop={8} onPress={closeEditor}
+                style={({ pressed }) => [styles.closeButton, (pressed || saving) && styles.pressed]}>
+                <ThemedText type="smallBold">Exit</ThemedText>
+              </Pressable>
+            </View>
+            <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editor}>
+        {!imports.length && <ScheduleImport disabled={!ready || saving || importing || imports.length > 0}
+          onImport={items => { setImportSource('screenshot'); setImports(items); loadDraft(items[0]); setEditorOpen(true); }}
           onBusyChange={setImporting}
           renderTrigger={(pick, disabled, busy) => (
             <Pressable accessibilityRole="button" disabled={disabled} onPress={pick}
@@ -125,29 +142,13 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
               <SymbolView name={{ ios: 'photo', android: 'image', web: 'image' }} size={21} tintColor="#5A9CFF" />
               <Text style={styles.secondaryButtonText}>{busy ? 'Reading screenshot...' : 'Import schedule screenshot'}</Text>
             </Pressable>
-          )} />
-      </View>
-      <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
-        <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
-          <SafeAreaView style={styles.modal}>
-            <View style={styles.modalHeader}>
-              <ThemedText type="smallBold">{imports.length ? 'Review event' : 'Add class'}</ThemedText>
-              <Pressable accessibilityRole="button" accessibilityLabel="Close class editor" disabled={saving}
-                accessibilityState={{ disabled: saving }} hitSlop={8} onPress={closeEditor}
-                style={({ pressed }) => [styles.closeButton, (pressed || saving) && styles.pressed]}>
-                <View pointerEvents="none">
-                  <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={24} tintColor={theme.text} />
-                </View>
-              </Pressable>
-            </View>
-            <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editor}>
+          )} />}
                 {!imports.length && <PlanInput disabled={!ready || saving || importing} onBusyChange={setImporting}
-                  onPlan={plan => { setImports([plan]); loadDraft(plan); }} />}
+                  onPlan={plan => { setImportSource('plan'); setImports([plan]); loadDraft(plan); }} />}
                 {imports.length > 0 && <View style={{ gap: 8 }}>
                   <ThemedText type="smallBold">Review event · {imports.length} remaining</ThemedText>
-                  <ThemedText type="small">Campus: {imports[0].campus || 'Could not determine from screenshot'}</ThemedText>
-                  <ThemedText type="small">{imports[0].locationStatus || 'Enter the building coordinates below.'}</ThemedText>
+                  <ThemedText type="small">Campus: {imports[0].campus || 'Enter your college below'}</ThemedText>
+                  <ThemedText type="small">{!imports[0].campus || !imports[0].building ? 'Complete the location below to find your building.' : imports[0].locationStatus || 'Find your building below.'}</ThemedText>
                   {!!imports[0].matchedAddress && <ThemedText type="small">Google Maps: {imports[0].matchedAddress}</ThemedText>}
                   <Button title="Review pin in Google Maps" disabled={!form.latitude.trim() || !form.longitude.trim() || !Number.isFinite(Number(form.latitude)) || !Number.isFinite(Number(form.longitude))} onPress={() => {
                     void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${form.latitude},${form.longitude}`)}`).catch(() => setError('Could not open Google Maps. Check coordinates manually.'));
@@ -159,9 +160,9 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
                 <ThemedText type="smallBold">{imports.length ? 'Review and save class' : 'Add a class'}</ThemedText>
                 {imports.length > 0 && <BuildingLookup key={`${imports.length}:${imports[0]?.name}`}
                   initialCampus={imports[0]?.campus ?? ''} initialBuilding={imports[0]?.building ?? ''}
-                  onFound={(latitude, longitude) => { setLocationConfirmed(false); setForm(previous => ({ ...previous, latitude, longitude })); }} />}
-                {eventDate && <ThemedText type="smallBold">{eventDate} | One time</ThemedText>}
-                {!eventDate && <View style={styles.days}>{DAYS.map((day, index) => <Button key={day} title={`${days.includes(index) ? '✓ ' : ''}${day}`} onPress={() => setDays(previous => previous.includes(index) ? previous.filter(item => item !== index) : [...previous, index])} />)}</View>}
+                  allowBuildingEdit={importSource === 'plan'}
+                  onFound={(latitude, longitude, building) => { setLocationConfirmed(false); setForm(previous => ({ ...previous, latitude, longitude, place: building || previous.place })); }} />}
+                <ScheduleDate key={imports[0]?.name || 'manual'} date={eventDate} days={days} onDate={setEventDate} onDays={setDays} />
                 {imports.length > 0 && <ThemedText type="small">Extracted location: {form.place || 'Not readable — try another screenshot'}</ThemedText>}
                 <Button title={details ? "Hide location details" : "Location details"} onPress={() => setDetails(value => !value)} />
                 {(Object.keys(labels) as (keyof typeof labels)[]).filter(key => !(imports.length > 0 && key === 'place') && (details || !['latitude', 'longitude', 'radius'].includes(key))).map(key => <View key={key}>
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.65 },
   modal: { flex: 1 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8, minHeight: 64, flexShrink: 0 },
-  closeButton: { width: 48, height: 48, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  closeButton: { minWidth: 64, minHeight: 48, paddingHorizontal: 12, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
   editor: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: 20, gap: 12 },
   days: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   input: { borderWidth: 1, borderColor: '#8C9BB0', borderRadius: 8, padding: 12, minHeight: 44 },

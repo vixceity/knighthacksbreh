@@ -81,7 +81,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
         const status = attendance(entry, position, now);
         return <View key={entry.id} style={styles.entry}>
           <ThemedText type="smallBold">{entry.name} — {entry.place}</ThemedText>
-          <ThemedText type="small">{entry.date ? `${entry.date} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} · {entry.start}–{entry.end} · {entry.radius} m</ThemedText>
+          <ThemedText type="small">{entry.date ? `${entry.date} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} · {displayTime(entry.start)}–{displayTime(entry.end)} · {entry.radius} m</ThemedText>
           <ThemedText accessibilityLiveRegion="polite">{status === 'absent' ? 'Not at class — head to your classroom' : status === 'present' ? 'At class' : status === 'unknown' ? 'Unable to check — waiting for an accurate location' : 'Not in session'}</ThemedText>
           <Button title={`Delete ${entry.name}`} disabled={saving} onPress={() => void save(classes.filter(item => item.id !== entry.id))} />
         </View>;

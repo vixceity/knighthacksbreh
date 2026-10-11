@@ -33,10 +33,14 @@ export default function HomeScreen() {
             <SymbolView name={{ ios: 'gearshape', android: 'settings', web: 'settings' }} size={27} tintColor="#A7A7AE" />
           </Pressable>
         </View>
-        {absent && <View style={styles.alert}><Text accessibilityRole="alert" style={styles.alertText}>Locking down{'\n'}{apps.length ? apps.join(', ') : 'No apps selected'}{'\n'}Pestering you with notifications</Text>
+        {absent && <View style={styles.alert}>
+          <Text style={styles.alertKicker}>CLASS IN SESSION</Text>
+          <Text accessibilityRole="alert" style={styles.alertTitle}>YOU&apos;RE LATE. GET TO CLASS NOW.</Text>
+          <Text style={styles.alertText}>Attendance check has you outside your class location.</Text>
+          <Text style={styles.alertDetails}>Lockdown active: {apps.length ? apps.join(', ') : 'No apps selected'}</Text>
           <Link href="/blocked-preview" asChild>
             <Pressable accessibilityRole="button" style={({ pressed }) => [styles.previewButton, pressed && styles.pressed]}>
-              <Text style={styles.alertText}>See what it looks like</Text>
+              <Text style={styles.previewText}>See what it looks like</Text>
             </Pressable>
           </Link>
         </View>}
@@ -68,7 +72,11 @@ const styles = StyleSheet.create({
   settingsTitle: { color: '#F5F5F7', fontSize: 22, fontWeight: '600', marginVertical: 20 },
   demoButton: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   demoText: { color: '#5A9CFF', fontSize: 16 },
-  alert: { backgroundColor: '#B91C1C', padding: 16, borderRadius: 8, marginTop: 20 },
-  alertText: { color: '#FFFFFF', fontWeight: '600' },
-  previewButton: { minHeight: 44, marginTop: 12, padding: 12, borderRadius: 8, backgroundColor: '#7F1D1D', alignItems: 'center' },
+  alert: { backgroundColor: '#FFE500', borderColor: '#FF3B30', borderWidth: 3, padding: 18, borderRadius: 8, marginTop: 20, gap: 8 },
+  alertKicker: { color: '#7F1D1D', fontSize: 13, lineHeight: 17, fontWeight: '900' },
+  alertTitle: { color: '#111827', fontSize: 24, lineHeight: 29, fontWeight: '900' },
+  alertText: { color: '#261D00', fontSize: 16, lineHeight: 22, fontWeight: '700' },
+  alertDetails: { color: '#4A3A00', fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  previewButton: { minHeight: 44, marginTop: 8, padding: 12, borderRadius: 6, backgroundColor: '#D71920', alignItems: 'center' },
+  previewText: { color: '#FFFFFF', fontWeight: '700' },
 });

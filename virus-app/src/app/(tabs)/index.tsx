@@ -4,13 +4,14 @@ import type { LocationObject } from 'expo-location';
 import { Link } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ClassSchedule } from '@/components/class-schedule';
 import { LocationCard } from '@/components/location-card';
-import { BottomTabInset, MaxContentWidth } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Palette, Radius, Typography } from '@/constants/theme';
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const { apps } = useLockdownApps();
   const [position, setPosition] = useState<LocationObject | null>(null);
   const [absent, setAbsent] = useState(false);
@@ -18,7 +19,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.screen, { paddingBottom: Math.max(BottomTabInset, 80) + insets.bottom + 24 }]} keyboardShouldPersistTaps="handled">
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
             <Text style={styles.appName}>Dandruff</Text>
@@ -30,7 +31,7 @@ export default function HomeScreen() {
             accessibilityState={{ expanded: settingsOpen }}
             onPress={() => setSettingsOpen(value => !value)}
             style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}>
-            <SymbolView name={{ ios: 'gearshape', android: 'settings', web: 'settings' }} size={27} tintColor="#A7A7AE" />
+            <SymbolView name={{ ios: 'gearshape', android: 'settings', web: 'settings' }} size={24} tintColor={Palette.muted} />
           </Pressable>
         </View>
         {absent && <View style={styles.alert}>
@@ -60,23 +61,23 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#0B0B0C' },
-  screen: { flexGrow: 1, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingHorizontal: 24, paddingTop: 28, paddingBottom: Math.max(BottomTabInset, 80) + 28 },
+  safeArea: { flex: 1, backgroundColor: Palette.background },
+  screen: { flexGrow: 1, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingHorizontal: 24, paddingTop: 24 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
-  headerText: { flex: 1 },
-  appName: { color: '#F5F5F7', fontSize: 38, lineHeight: 44, fontWeight: '700' },
-  tagline: { marginTop: 4, color: '#9B9BA2', fontSize: 18, lineHeight: 24 },
+  headerText: { flex: 1, minWidth: 0 },
+  appName: { color: Palette.text, fontFamily: Typography.brand, fontSize: 38, lineHeight: 52 },
+  tagline: { marginTop: 4, color: Palette.muted, fontFamily: Typography.body, fontSize: 14, lineHeight: 24 },
   settingsButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.65 },
   hidden: { display: 'none' },
-  settingsTitle: { color: '#F5F5F7', fontSize: 22, fontWeight: '600', marginVertical: 20 },
-  demoButton: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
-  demoText: { color: '#5A9CFF', fontSize: 16 },
-  alert: { backgroundColor: '#FFE500', borderColor: '#FF3B30', borderWidth: 3, padding: 18, borderRadius: 8, marginTop: 20, gap: 8 },
-  alertKicker: { color: '#7F1D1D', fontSize: 13, lineHeight: 17, fontWeight: '900' },
-  alertTitle: { color: '#111827', fontSize: 24, lineHeight: 29, fontWeight: '900' },
-  alertText: { color: '#261D00', fontSize: 16, lineHeight: 22, fontWeight: '700' },
-  alertDetails: { color: '#4A3A00', fontSize: 14, lineHeight: 20, fontWeight: '600' },
-  previewButton: { minHeight: 44, marginTop: 8, padding: 12, borderRadius: 6, backgroundColor: '#D71920', alignItems: 'center' },
-  previewText: { color: '#FFFFFF', fontWeight: '700' },
+  settingsTitle: { color: Palette.text, fontFamily: Typography.heading, fontSize: 26, lineHeight: 32, marginVertical: 24 },
+  demoButton: { minHeight: 48, marginTop: 8, justifyContent: 'center', alignItems: 'center' },
+  demoText: { color: Palette.accent, fontFamily: Typography.medium, fontSize: 14, lineHeight: 22 },
+  alert: { backgroundColor: Palette.surface, borderColor: Palette.accentBorder, borderWidth: 1, padding: 16, borderRadius: Radius.card, marginTop: 24, gap: 8 },
+  alertKicker: { color: Palette.accent, fontFamily: Typography.semibold, fontSize: 12, lineHeight: 20 },
+  alertTitle: { color: Palette.text, fontFamily: Typography.headingStrong, fontSize: 24, lineHeight: 30 },
+  alertText: { color: Palette.text, fontFamily: Typography.body, fontSize: 14, lineHeight: 22 },
+  alertDetails: { color: Palette.muted, fontFamily: Typography.body, fontSize: 13, lineHeight: 21 },
+  previewButton: { minHeight: 48, marginTop: 8, padding: 12, borderRadius: Radius.button, borderWidth: 1, borderColor: Palette.accentBorder, alignItems: 'center' },
+  previewText: { color: Palette.accent, fontFamily: Typography.semibold, fontSize: 14, lineHeight: 22 },
 });

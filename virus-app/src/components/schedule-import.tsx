@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { type ReactNode, useState } from 'react';
-import { ActivityIndicator, Button, Image, Platform, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from './themed-text';
+import { Palette, Radius } from '@/constants/theme';
 
 export type ImportedClass = {
   date?: string;
@@ -76,14 +77,22 @@ export function ScheduleImport({ onImport, disabled, renderTrigger, onBusyChange
     }
   }
 
-  return <View style={{ gap: 10 }}>
-    {!renderTrigger && <ThemedText type="smallBold">Import schedule</ThemedText>}
+  return <View style={{ gap: 8 }}>
+    {!renderTrigger && <ThemedText type="subtitle">Import schedule</ThemedText>}
     {!renderTrigger && <ThemedText type="small">Gemini reads screenshots and matches UCF buildings to presets. Review classes and select a map pin if needed.</ThemedText>}
     {renderTrigger
       ? renderTrigger(() => void pick(), busy || disabled, busy)
-      : <Button title={busy ? 'Reading screenshot…' : 'Choose schedule screenshot'} disabled={busy || disabled} onPress={() => void pick()} />}
-    {busy && <ActivityIndicator accessibilityLabel="Reading schedule" />}
+      : <Pressable accessibilityRole="button" disabled={busy || disabled} onPress={() => void pick()}
+          style={({ pressed }) => [styles.button, (pressed || busy || disabled) && styles.dimmed]}>
+          <ThemedText type="smallBold" style={{ color: Palette.accent, textAlign: 'center' }}>{busy ? 'Reading screenshot…' : 'Choose schedule screenshot'}</ThemedText>
+        </Pressable>}
+    {busy && <ActivityIndicator color={Palette.accent} accessibilityLabel="Reading schedule" />}
     {preview && !renderTrigger && <Image source={{ uri: preview }} resizeMode="contain" accessibilityLabel="Selected schedule screenshot" style={{ width: '100%', height: 180 }} />}
-    {!!error && <ThemedText accessibilityRole="alert" style={renderTrigger && { color: '#FCA5A5' }}>{error}</ThemedText>}
+    {!!error && <ThemedText accessibilityRole="alert" style={{ color: Palette.accent }}>{error}</ThemedText>}
   </View>;
 }
+
+const styles = StyleSheet.create({
+  button: { minHeight: 48, padding: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Palette.accentBorder, borderRadius: Radius.button },
+  dimmed: { opacity: 0.5 },
+});

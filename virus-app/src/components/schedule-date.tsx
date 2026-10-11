@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { ThemedText } from './themed-text';
 import { localDate } from '@/utils/attendance';
+import { Palette, Radius } from '@/constants/theme';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export function ScheduleDate({ date, days, onDate, onDays }: {
@@ -11,27 +12,27 @@ export function ScheduleDate({ date, days, onDate, onDays }: {
   function select(value: Date) { onDate(localDate(value)); setMonth(value); }
   function chip(label: string, selected: boolean, action: () => void) {
     return <Pressable key={label} accessibilityRole="button" accessibilityState={{ selected }} onPress={action}
-      style={{ minHeight: 44, paddingHorizontal: 12, justifyContent: 'center', borderRadius: 8, borderWidth: 1, borderColor: selected ? '#2F80ED' : '#8793A5', backgroundColor: selected ? '#2F80ED' : 'transparent' }}>
-      <ThemedText type="smallBold" style={selected ? { color: '#FFFFFF' } : undefined}>{label}</ThemedText>
+      style={{ minHeight: 44, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.small, borderWidth: 1, borderColor: selected ? Palette.accentBorder : Palette.border, backgroundColor: selected ? Palette.selected : 'transparent' }}>
+      <ThemedText type="smallBold" style={{ color: selected ? Palette.text : Palette.muted, fontSize: 12, textAlign: 'center', flexShrink: 1 }}>{label}</ThemedText>
     </Pressable>;
   }
   const first = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
   const count = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   return <View style={{ gap: 12 }}>
-    <ThemedText type="smallBold">When</ThemedText>
+    <ThemedText type="subtitle">When</ThemedText>
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {chip('Weekly', !date, () => onDate(undefined))}
       {chip('One time', !!date, () => select(new Date()))}
     </View>
     {!date ? <>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>{DAYS.map((day, index) => chip(day, days.includes(index), () => onDays(days.includes(index) ? days.filter(item => item !== index) : [...days, index].sort())))}</View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{DAYS.map((day, index) => chip(day, days.includes(index), () => onDays(days.includes(index) ? days.filter(item => item !== index) : [...days, index].sort())))}</View>
       <ThemedText type="small">{days.length ? `Every ${[...days].sort().map(day => DAYS[day]).join(', ')}` : 'Choose at least one day'}</ThemedText>
     </> : <>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {chip('Today', date === localDate(new Date()), () => select(new Date()))}
         {chip('Tomorrow', false, () => { const next = new Date(); next.setDate(next.getDate() + 1); select(next); })}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
         {chip('Previous month', false, () => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)))}
         {chip('Next month', false, () => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}
       </View>

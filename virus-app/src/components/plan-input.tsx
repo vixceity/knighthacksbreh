@@ -4,6 +4,7 @@ import { ThemedText } from './themed-text';
 import { type ImportedClass } from './schedule-import';
 import { localDate, validDate } from '@/utils/attendance';
 import { useTheme } from '@/hooks/use-theme';
+import { Palette, Radius, Typography } from '@/constants/theme';
 
 export function PlanInput({ disabled, onPlan, onBusyChange }: {
   disabled: boolean;
@@ -35,11 +36,11 @@ export function PlanInput({ disabled, onPlan, onBusyChange }: {
     } catch (failure) { setError(failure instanceof Error && failure.name !== 'AbortError' ? failure.message : 'Request timed out. Try again.'); }
     finally { clearTimeout(timer); setBusy(false); onBusyChange?.(false); }
   }
-  return <View style={{ gap: 10 }}>
-    <ThemedText type="smallBold">Add a plan</ThemedText>
+  return <View style={{ gap: 8 }}>
+    <ThemedText type="subtitle">Add a plan</ThemedText>
     <ThemedText type="small">Include a place, day, and time.</ThemedText>
     <TextInput multiline accessibilityLabel="Your plan" editable={!busy && !disabled} value={text} onChangeText={setText} maxLength={2000}
-      placeholderTextColor="#77777F" style={{ color: theme.text, backgroundColor: '#141416', borderColor: '#34343A', borderWidth: 1, padding: 12, borderRadius: 8, minHeight: 90 }} />
+      placeholderTextColor={Palette.muted} selectionColor={Palette.accent} style={{ color: theme.text, fontFamily: Typography.body, fontSize: 14, lineHeight: 22, textAlignVertical: 'top', backgroundColor: Palette.surface, borderColor: Palette.border, borderWidth: 1, padding: 12, borderRadius: Radius.input, minHeight: 96 }} />
     <Pressable accessibilityRole="button" disabled={disabled || busy || !text.trim()} onPress={() => void parse()}
       style={({ pressed }) => [styles.button, (pressed || disabled || busy || !text.trim()) && styles.dimmed]}>
       <Text style={styles.buttonText}>{busy ? 'Reading plan…' : 'Review plan'}</Text>
@@ -49,7 +50,7 @@ export function PlanInput({ disabled, onPlan, onBusyChange }: {
 }
 
 const styles = {
-  button: { minHeight: 46, alignItems: 'center' as const, justifyContent: 'center' as const, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#2F80ED' },
-  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' as const },
+  button: { minHeight: 48, alignItems: 'center' as const, justifyContent: 'center' as const, paddingHorizontal: 16, paddingVertical: 12, borderRadius: Radius.button, backgroundColor: Palette.selected, borderWidth: 1, borderColor: Palette.accentBorder },
+  buttonText: { color: Palette.text, fontFamily: Typography.medium, fontSize: 14, lineHeight: 22 },
   dimmed: { opacity: 0.5 },
 };

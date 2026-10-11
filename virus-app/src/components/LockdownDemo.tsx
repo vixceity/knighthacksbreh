@@ -9,7 +9,8 @@ import {
   StyleSheet,
 } from "react-native";
 
-import { MaxContentWidth } from '@/constants/theme';
+import { SymbolView } from 'expo-symbols';
+import { MaxContentWidth, Palette, Typography } from '@/constants/theme';
 
 
 export default function LockdownDemo() {
@@ -30,13 +31,15 @@ export default function LockdownDemo() {
           disabled={!ready}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: selected.includes(app), disabled: !ready }}
-          style={({ pressed }) => [styles.appRow, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.appRow, selected.includes(app) && styles.appRowSelected, pressed && styles.pressed]}
           onPress={() => toggleApp(app)}
         >
           <Text style={styles.appName}>{app}</Text>
-          <Text style={styles.check}>
-            {selected.includes(app) ? "✓" : "○"}
-          </Text>
+          <SymbolView
+            name={{ ios: selected.includes(app) ? 'checkmark.square.fill' : 'square', android: selected.includes(app) ? 'check_box' : 'check_box_outline_blank', web: selected.includes(app) ? 'check_box' : 'check_box_outline_blank' }}
+            size={22}
+            tintColor={selected.includes(app) ? Palette.accent : Palette.muted}
+          />
         </Pressable>
       ))}
 
@@ -51,7 +54,7 @@ export default function LockdownDemo() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0B0B0C",
+    backgroundColor: Palette.background,
   },
   content: {
     flexGrow: 1,
@@ -62,36 +65,35 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   title: {
-    color: "#F5F5F7",
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: "bold",
+    color: Palette.text,
+    fontFamily: Typography.headingStrong,
+    fontSize: 30,
+    lineHeight: 36,
   },
   subtitle: {
-    color: "#9B9BA2",
+    color: Palette.muted,
+    fontFamily: Typography.body,
+    fontSize: 14,
+    lineHeight: 22,
     marginTop: 8,
     marginBottom: 24,
   },
   appRow: {
-    padding: 18,
+    padding: 16,
     minHeight: 60,
     alignItems: "center",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#2A2A2D",
-    marginBottom: 10,
-    backgroundColor: "#171719",
-    borderRadius: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   appName: {
-    color: "#F5F5F7",
-    fontSize: 17,
+    color: Palette.text,
+    fontFamily: Typography.medium,
+    fontSize: 15,
+    lineHeight: 24,
   },
-  check: {
-    color: "#5A9CFF",
-    fontSize: 22,
-  },
+  appRowSelected: { backgroundColor: Palette.surface },
   pressed: { opacity: 0.65 },
-  error: { color: '#FCA5A5', marginTop: 12 },
+  error: { color: Palette.accent, fontFamily: Typography.body, fontSize: 14, lineHeight: 22, marginTop: 12 },
 });

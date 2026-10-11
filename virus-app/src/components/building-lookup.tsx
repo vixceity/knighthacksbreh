@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Button, Platform, TextInput, View } from 'react-native';
+import { Platform, Pressable, TextInput, View } from 'react-native';
 import { ThemedText } from './themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { Palette, Radius, Typography } from '@/constants/theme';
 
 export function BuildingLookup({ initialCampus, initialBuilding, allowBuildingEdit = false, onFound }: {
   initialCampus: string; initialBuilding: string;
@@ -33,9 +34,9 @@ export function BuildingLookup({ initialCampus, initialBuilding, allowBuildingEd
     } catch { setMessage('Could not look up the building. Check that the import server is running, then retry.'); }
     finally { clearTimeout(timeout); setBusy(false); }
   }
-  const inputStyle = { color: theme.text, borderColor: '#8C9BB0', borderWidth: 1, borderRadius: 8, padding: 12 };
-  return <View style={{ gap: 10 }}>
-    <ThemedText type="smallBold">Find location</ThemedText>
+  const inputStyle = { color: theme.text, fontFamily: Typography.body, fontSize: 14, minHeight: 48, backgroundColor: Palette.surface, borderColor: Palette.border, borderWidth: 1, borderRadius: Radius.input, padding: 12 };
+  return <View style={{ gap: 8 }}>
+    <ThemedText type="subtitle">Find location</ThemedText>
     <ThemedText>College / campus</ThemedText>
     <TextInput accessibilityLabel="College or campus" editable={!busy} value={campus} onChangeText={value => { setCampus(value); setMessage(''); onFound('', ''); }} style={inputStyle} />
     {allowBuildingEdit ? <>
@@ -43,7 +44,10 @@ export function BuildingLookup({ initialCampus, initialBuilding, allowBuildingEd
       <TextInput accessibilityLabel="Building" editable={!busy} value={building}
         onChangeText={value => { setBuilding(value); setMessage(''); onFound('', ''); }} style={inputStyle} />
     </> : <ThemedText type="small">{building ? `Building: ${building}` : 'Building missing. Try a clearer screenshot.'}</ThemedText>}
-    <Button title={busy ? 'Finding building…' : 'Find building'} disabled={busy || !campus.trim() || !building.trim()} onPress={() => void lookup()} />
+    <Pressable accessibilityRole="button" disabled={busy || !campus.trim() || !building.trim()} onPress={() => void lookup()}
+      style={({ pressed }) => ({ minHeight: 48, padding: 12, alignItems: 'center', justifyContent: 'center', borderRadius: Radius.button, borderWidth: 1, borderColor: Palette.accentBorder, backgroundColor: Palette.selected, opacity: pressed || busy || !campus.trim() || !building.trim() ? 0.5 : 1 })}>
+      <ThemedText type="smallBold">{busy ? 'Finding building…' : 'Find building'}</ThemedText>
+    </Pressable>
     {!!message && <ThemedText accessibilityLiveRegion="polite">{message}</ThemedText>}
   </View>;
 }

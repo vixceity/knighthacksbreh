@@ -11,7 +11,7 @@ import { Pressable, View, StyleSheet } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Palette, Radius, Spacing, Typography } from '@/constants/theme';
 
 export default function AppTabs() {
   return (
@@ -33,11 +33,11 @@ export default function AppTabs() {
 
 export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable {...props} style={({ pressed }) => [styles.tabButton, pressed && styles.pressed]}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
+        <ThemedText type="small" style={styles.tabLabel} themeColor={isFocused ? 'text' : 'textSecondary'}>
           {children}
         </ThemedText>
       </ThemedView>
@@ -49,7 +49,7 @@ export function CustomTabList(props: TabListProps) {
   return (
     <View {...props} style={styles.tabListContainer}>
       <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
+        <ThemedText style={styles.brandText}>
           Dandruff
         </ThemedText>
 
@@ -72,7 +72,10 @@ const styles = StyleSheet.create({
   innerContainer: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderRadius: 8,
+    borderRadius: Radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
+    backgroundColor: Palette.background,
     flexDirection: 'row',
     alignItems: 'center',
     flexGrow: 1,
@@ -81,13 +84,20 @@ const styles = StyleSheet.create({
   },
   brandText: {
     marginRight: 'auto',
+    fontFamily: Typography.brand,
+    fontSize: 22,
+    lineHeight: 30,
   },
+  tabButton: { flexShrink: 1 },
+  tabLabel: { fontFamily: Typography.medium, fontSize: 12, lineHeight: 20 },
   pressed: {
     opacity: 0.7,
   },
   tabButtonView: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.compact,
+    borderRadius: Radius.small,
   },
 });

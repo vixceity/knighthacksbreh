@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Palette, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function TabTwoScreen() {
@@ -27,8 +27,8 @@ export default function TabTwoScreen() {
       paddingBottom: insets.bottom,
     },
     web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
+      paddingTop: Spacing.five,
+      paddingBottom: 112,
     },
   });
 
@@ -136,15 +136,17 @@ const styles = StyleSheet.create({
   container: {
     maxWidth: MaxContentWidth,
     flexGrow: 1,
+    flexShrink: 1,
+    width: '100%',
   },
   titleContainer: {
     gap: Spacing.three,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
+    paddingVertical: Spacing.five,
   },
   centerText: {
-    textAlign: 'center',
+    textAlign: 'left',
   },
   pressed: {
     opacity: 0.7,
@@ -153,7 +155,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
+    borderRadius: Radius.button,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
     justifyContent: 'center',
     gap: Spacing.one,
     alignItems: 'center',
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
   imageTutorial: {
     width: '100%',
     aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
     marginTop: Spacing.two,
   },
   imageReact: {

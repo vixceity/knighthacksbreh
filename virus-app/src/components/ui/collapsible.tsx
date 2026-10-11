@@ -5,7 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Palette, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
@@ -27,7 +27,7 @@ export function Collapsible({ children, title }: PropsWithChildren & { title: st
           />
         </ThemedView>
 
-        <ThemedText type="small">{title}</ThemedText>
+        <ThemedText type="subtitle" style={styles.title}>{title}</ThemedText>
       </Pressable>
       {isOpen && (
         <Animated.View entering={FadeIn.duration(200)}>
@@ -52,14 +52,16 @@ const styles = StyleSheet.create({
   button: {
     width: Spacing.four,
     height: Spacing.four,
-    borderRadius: 12,
+    backgroundColor: Palette.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     marginTop: Spacing.three,
-    borderRadius: Spacing.three,
+    backgroundColor: Palette.background,
     marginLeft: Spacing.four,
-    padding: Spacing.four,
+    paddingVertical: Spacing.three,
+    gap: Spacing.two,
   },
+  title: { fontSize: 22, lineHeight: 28, flex: 1 },
 });

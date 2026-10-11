@@ -13,6 +13,7 @@ import { ScheduleDate } from './schedule-date';
 import LocationMap from './location-map';
 import ucfBuildings from '@/constants/ucf-buildings.json';
 import { type ClassEntry, type Position, attendance, validClass, overlaps } from '@/utils/attendance';
+import { Palette, Radius, Typography } from '@/constants/theme';
 
 const KEY = 'class-schedule-v1';
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -252,7 +253,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
         const status = attendance(entry, position, now);
         return <View key={entry.id} style={styles.classRow}>
           <View style={styles.classInfo}>
-            <Text style={styles.emptyTitle}>{entry.name}</Text>
+            <Text style={styles.className}>{entry.name}</Text>
             <Text style={styles.secondaryText}>{entry.place || 'N/A'}</Text>
             <Text style={styles.secondaryText}>{entry.date ? `${new Date(`${entry.date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} | {displayTime(entry.start)} - {displayTime(entry.end)}</Text>
             <Text accessibilityLiveRegion="polite" style={[styles.secondaryText, status === 'absent' && styles.absentText, status === 'present' && styles.presentText]}>
@@ -262,7 +263,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${entry.name}`} disabled={saving || importing}
             onPress={() => void save(classes.filter(item => item.id !== entry.id))}
             style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
-            <SymbolView name={{ ios: 'trash', android: 'delete', web: 'delete' }} size={22} tintColor="#A7A7AE" />
+            <SymbolView name={{ ios: 'trash', android: 'delete', web: 'delete' }} size={20} tintColor={Palette.muted} />
           </Pressable>
         </View>;
       })}
@@ -272,7 +273,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
         <Pressable accessibilityRole="button" disabled={!ready || saving || importing}
           onPress={() => { if (!imports.length) loadDraft(); setEditorOpen(true); }}
           style={({ pressed }) => [styles.primaryButton, (pressed || !ready || saving || importing) && styles.pressed]}>
-          <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={24} tintColor="#FFFFFF" />
+          <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={22} tintColor={Palette.background} />
           <Text style={styles.primaryButtonText}>{imports.length ? 'Continue reviewing classes' : 'Add class'}</Text>
         </Pressable>
 
@@ -281,12 +282,12 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
         <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
           <SafeAreaView style={[styles.modal, { backgroundColor: theme.background }]}>
             <View style={styles.modalHeader}>
-              <ThemedText type="smallBold">{imports.length ? importSource === 'plan' ? 'Review plan' : 'Review schedule' : 'Add class'}</ThemedText>
+              <ThemedText type="subtitle" style={styles.modalTitle}>{imports.length ? importSource === 'plan' ? 'Review plan' : 'Review schedule' : 'Add class'}</ThemedText>
               <Pressable accessibilityRole="button" accessibilityLabel="Back to classes" disabled={saving || importing}
                 accessibilityState={{ disabled: saving || importing }} hitSlop={8} onPress={closeEditor}
                 style={({ pressed }) => [styles.backButton, (pressed || saving || importing) && styles.pressed]}>
                 <View pointerEvents="none">
-                  <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} size={20} tintColor="#5A9CFF" />
+                  <SymbolView name={{ ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' }} size={20} tintColor={Palette.accent} />
                 </View>
                 <Text style={styles.backButtonText}>Back</Text>
               </Pressable>
@@ -300,7 +301,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
           renderTrigger={(pick, disabled, busy) => (
             <Pressable accessibilityRole="button" disabled={disabled} onPress={pick}
               style={({ pressed }) => [styles.secondaryButton, (pressed || disabled) && styles.pressed]}>
-              <SymbolView name={{ ios: 'photo', android: 'image', web: 'image' }} size={21} tintColor="#5A9CFF" />
+              <SymbolView name={{ ios: 'photo', android: 'image', web: 'image' }} size={21} tintColor={Palette.accent} />
               <Text style={styles.secondaryButtonText}>{busy ? 'Reading screenshot...' : 'Import schedule screenshot'}</Text>
             </Pressable>
           )} />
@@ -318,7 +319,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
                 <ScheduleDate key={imports[0]?.name || 'manual'} date={eventDate} days={days} onDate={setEventDate} onDays={setDays} />
                 <View style={styles.mapSection}>
                   <View style={styles.sectionHeading}>
-                    <ThemedText type="smallBold">Class location</ThemedText>
+                    <ThemedText type="subtitle">Class location</ThemedText>
                     <ThemedText type="small">{form.place || 'Select a building pin'}</ThemedText>
                   </View>
                   <LocationMap showUcfBuildings onBuildingSelect={selectBuilding} />
@@ -327,7 +328,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
                 {(Object.keys(labels) as (keyof typeof labels)[]).filter(key => !(imports.length > 0 && key === 'place') && (details || !['latitude', 'longitude', 'radius'].includes(key))).map(key => <View key={key}>
                   <ThemedText type="small">{labels[key]}</ThemedText>
                   <TextInput accessibilityLabel={labels[key]} value={form[key]} onChangeText={value => setForm(previous => ({ ...previous, [key]: value }))}
-                    autoCapitalize="none" placeholderTextColor="#77777F" style={styles.input} />
+                    autoCapitalize="none" placeholderTextColor={Palette.muted} selectionColor={Palette.accent} style={styles.input} />
                 </View>)}
                 {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
                 <EditorAction title={saving ? 'Saving…' : 'Save class'} primary disabled={!ready || saving || importing} onPress={() => void add()} />
@@ -351,44 +352,46 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
 
 const styles = StyleSheet.create({
   home: { flexGrow: 1 },
-  sectionHeader: { marginTop: 64, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
-  sectionTitle: { color: '#F5F5F7', fontSize: 27, lineHeight: 33, fontWeight: '700' },
-  classCount: { color: '#77777F', fontSize: 15, lineHeight: 20 },
-  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#2A2A2D', marginTop: 16 },
-  emptyState: { paddingTop: 34, paddingBottom: 42 },
-  emptyTitle: { color: '#D6D6DA', fontSize: 18, lineHeight: 24, fontWeight: '600' },
-  emptyBody: { marginTop: 8, maxWidth: 290, color: '#85858D', fontSize: 16, lineHeight: 23 },
-  secondaryText: { color: '#9B9BA2', fontSize: 14, lineHeight: 21 },
-  classRow: { flexDirection: 'row', gap: 12, paddingVertical: 20, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#2A2A2D' },
-  classInfo: { flex: 1, gap: 4 },
+  sectionHeader: { marginTop: 48, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
+  sectionTitle: { color: Palette.text, fontFamily: Typography.headingStrong, fontSize: 30, lineHeight: 36 },
+  classCount: { color: Palette.muted, fontFamily: Typography.body, fontSize: 12, lineHeight: 20 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: Palette.border, marginTop: 16 },
+  emptyState: { paddingTop: 32, paddingBottom: 32 },
+  emptyTitle: { color: Palette.text, fontFamily: Typography.heading, fontSize: 24, lineHeight: 30 },
+  className: { color: Palette.text, fontFamily: Typography.heading, fontSize: 22, lineHeight: 28 },
+  emptyBody: { marginTop: 8, maxWidth: 320, color: Palette.muted, fontFamily: Typography.body, fontSize: 15, lineHeight: 24 },
+  secondaryText: { color: Palette.muted, fontFamily: Typography.body, fontSize: 13, lineHeight: 22 },
+  classRow: { flexDirection: 'row', gap: 12, paddingVertical: 24, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Palette.border },
+  classInfo: { flex: 1, minWidth: 0, gap: 4 },
   iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  absentText: { color: '#FCA5A5', fontSize: 14, lineHeight: 21 },
-  presentText: { color: '#86EFAC' },
-  actions: { marginTop: 'auto', paddingTop: 28, gap: 14 },
-  primaryButton: { minHeight: 54, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8, backgroundColor: '#2F80ED', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  primaryButtonText: { color: '#FFFFFF', fontSize: 18, lineHeight: 23, fontWeight: '600', flexShrink: 1 },
-  secondaryButton: { minHeight: 48, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  secondaryButtonText: { color: '#5A9CFF', fontSize: 16, lineHeight: 21, fontWeight: '500', flexShrink: 1 },
+  absentText: { color: Palette.accent, fontFamily: Typography.medium, fontSize: 13, lineHeight: 22 },
+  presentText: { color: Palette.text },
+  actions: { marginTop: 'auto', paddingTop: 32, gap: 16 },
+  primaryButton: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 16, borderRadius: Radius.button, backgroundColor: Palette.accent, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  primaryButtonText: { color: Palette.background, fontFamily: Typography.semibold, fontSize: 16, lineHeight: 24, flexShrink: 1, textAlign: 'center' },
+  secondaryButton: { minHeight: 48, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  secondaryButtonText: { color: Palette.accent, fontFamily: Typography.medium, fontSize: 14, lineHeight: 22, flexShrink: 1, textAlign: 'center' },
   pressed: { opacity: 0.65 },
   modal: { flex: 1 },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8, minHeight: 64, flexShrink: 0 },
-  backButton: { minHeight: 44, flexShrink: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 12 },
-  backButtonText: { color: '#5A9CFF', fontSize: 15, fontWeight: '600' },
-  editor: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: 20, gap: 16 },
-  formSection: { padding: 16, gap: 12, borderWidth: 1, borderColor: '#242427', borderRadius: 8, backgroundColor: '#111113' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 24, paddingVertical: 8, minHeight: 64, flexShrink: 0, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Palette.border },
+  modalTitle: { flexShrink: 1 },
+  backButton: { minHeight: 44, flexShrink: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 8 },
+  backButtonText: { color: Palette.accent, fontFamily: Typography.medium, fontSize: 14, lineHeight: 22 },
+  editor: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: 24, gap: 24 },
+  formSection: { paddingBottom: 24, gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Palette.border },
   sectionHeading: { gap: 4 },
-  mapSection: { padding: 12, gap: 12, borderWidth: 1, borderColor: '#242427', borderRadius: 8, backgroundColor: '#111113' },
+  mapSection: { gap: 12 },
   days: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  dayButton: { minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: '#34343A', borderRadius: 6, backgroundColor: '#141416' },
-  dayButtonSelected: { backgroundColor: '#2F80ED', borderColor: '#2F80ED' },
-  dayText: { color: '#A7A7AE', fontSize: 14, fontWeight: '600' },
-  dayTextSelected: { color: '#FFFFFF' },
-  input: { color: '#F5F5F7', backgroundColor: '#141416', borderWidth: 1, borderColor: '#34343A', borderRadius: 8, padding: 12, minHeight: 46 },
-  editorAction: { minHeight: 46, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, borderWidth: 1, borderColor: '#34343A', borderRadius: 6, backgroundColor: '#141416' },
-  editorActionPrimary: { borderColor: '#2F80ED', backgroundColor: '#2F80ED' },
-  editorActionText: { color: '#D6D6DA', fontSize: 15, fontWeight: '600' },
-  editorActionPrimaryText: { color: '#FFFFFF' },
+  dayButton: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderWidth: 1, borderColor: Palette.border, borderRadius: Radius.small, backgroundColor: Palette.surface },
+  dayButtonSelected: { backgroundColor: Palette.selected, borderColor: Palette.accentBorder },
+  dayText: { color: Palette.muted, fontFamily: Typography.medium, fontSize: 13 },
+  dayTextSelected: { color: Palette.text },
+  input: { color: Palette.text, fontFamily: Typography.body, fontSize: 15, backgroundColor: Palette.surface, borderWidth: 1, borderColor: Palette.border, borderRadius: Radius.input, padding: 12, minHeight: 48, marginTop: 8 },
+  editorAction: { minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: Palette.border, borderRadius: Radius.button, backgroundColor: Palette.surface },
+  editorActionPrimary: { borderColor: Palette.accent, backgroundColor: Palette.accent },
+  editorActionText: { color: Palette.text, fontFamily: Typography.medium, fontSize: 14, lineHeight: 22, textAlign: 'center' },
+  editorActionPrimaryText: { color: Palette.background, fontFamily: Typography.semibold },
   promptBackdrop: { ...StyleSheet.absoluteFill, zIndex: 10, elevation: 10, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0, 0, 0, 0.55)' },
-  promptContent: { width: '100%', maxWidth: 360, borderRadius: 8, padding: 20, gap: 14 },
-  promptButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#34343A', borderRadius: 6, backgroundColor: '#141416' },
+  promptContent: { width: '100%', maxWidth: 360, borderRadius: Radius.card, borderWidth: 1, borderColor: Palette.border, padding: 24, gap: 16 },
+  promptButton: { minHeight: 48, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Palette.accentBorder, borderRadius: Radius.button, backgroundColor: Palette.selected },
 });

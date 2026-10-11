@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import buildings from '@/constants/ucf-buildings.json';
 import { ThemedText } from './themed-text';
+import { Palette, Radius } from '@/constants/theme';
 
 type UcfBuilding = (typeof buildings)[number];
 
@@ -27,7 +28,7 @@ export default function LocationMap({ latitude, longitude, showUcfBuildings = fa
         coordinate={{ latitude: building.latitude, longitude: building.longitude }}
         title={`${building.code} · ${building.name}`}
         description={building.address}
-        pinColor={selected === building.code ? '#164C9B' : '#2F80ED'}
+        pinColor={selected === building.code ? Palette.selected : Palette.accent}
         onPress={() => { setSelected(building.code); onBuildingSelect?.(building); }}
       />)}
     </MapView>;
@@ -39,7 +40,7 @@ export default function LocationMap({ latitude, longitude, showUcfBuildings = fa
       {buildings.map(building => <Pressable key={building.code} accessibilityRole="button" onPress={() => {
         setSelected(building.code);
         onBuildingSelect?.(building);
-      }} style={styles.option}>
+      }} style={[styles.option, selected === building.code && styles.optionSelected]}>
         <ThemedText type="smallBold">{building.code}</ThemedText>
       </Pressable>)}
     </ScrollView>
@@ -47,6 +48,7 @@ export default function LocationMap({ latitude, longitude, showUcfBuildings = fa
 }
 
 const styles = StyleSheet.create({
-  list: { gap: 6, paddingVertical: 2 },
-  option: { minHeight: 36, minWidth: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, borderWidth: 1, borderColor: '#34343A', borderRadius: 6, backgroundColor: '#141416' },
+  list: { gap: 8, paddingVertical: 4 },
+  option: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderWidth: 1, borderColor: Palette.border, borderRadius: Radius.small, backgroundColor: Palette.surface },
+  optionSelected: { borderColor: Palette.accentBorder, backgroundColor: Palette.selected },
 });

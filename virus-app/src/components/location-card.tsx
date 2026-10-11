@@ -7,7 +7,7 @@ import LocationMap from '@/components/location-map';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Palette, Radius, Spacing } from '@/constants/theme';
 
 export function LocationCard({ onLocationChange }: { onLocationChange?: (location: Location.LocationObject | null) => void }) {
   const [attempt, setAttempt] = useState(0);
@@ -78,9 +78,9 @@ export function LocationCard({ onLocationChange }: { onLocationChange?: (locatio
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Your location</ThemedText>
+      <ThemedText type="subtitle">Your location</ThemedText>
       <ThemedText type="small">Updates every 10 seconds while this screen is open.</ThemedText>
-      {loading && <ActivityIndicator accessibilityLabel="Finding your location" />}
+      {loading && <ActivityIndicator color={Palette.accent} accessibilityLabel="Finding your location" />}
       <ThemedText type="small" accessibilityLiveRegion="polite">
         {loading ? 'Finding your location…' : error ?? 'Current location'}
       </ThemedText>
@@ -114,8 +114,11 @@ export function LocationCard({ onLocationChange }: { onLocationChange?: (locatio
 const styles = StyleSheet.create({
   card: {
     alignSelf: 'stretch',
-    padding: Spacing.three,
-    borderRadius: Spacing.four,
+    paddingVertical: Spacing.four,
+    backgroundColor: Palette.background,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: Palette.border,
     gap: Spacing.two,
   },
   button: {
@@ -123,8 +126,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#8C9BB0',
-    borderRadius: 12,
+    borderColor: Palette.accentBorder,
+    borderRadius: Radius.button,
+    backgroundColor: Palette.surface,
   },
   dimmed: { opacity: 0.5 },
 });

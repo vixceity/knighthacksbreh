@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import buildings from '@/constants/ucf-buildings.json';
 import { ThemedText } from './themed-text';
+import { Palette, Radius, Typography } from '@/constants/theme';
 
 type UcfBuilding = (typeof buildings)[number];
 const ucfBounds = { north: 28.606, south: 28.598, west: -81.204, east: -81.194 };
@@ -43,9 +44,9 @@ export default function LocationMap({ latitude, longitude, showUcfBuildings = fa
 }
 
 const styles = StyleSheet.create({
-  map: { position: 'relative', overflow: 'hidden', borderRadius: 8, borderWidth: 1, borderColor: '#8C9BB0' },
-  pin: { position: 'absolute', minWidth: 30, height: 30, borderRadius: 15, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2F80ED', borderWidth: 1, borderColor: '#0B0B0C' },
-  pinText: { color: '#FFFFFF', fontSize: 9, fontWeight: '700' },
-  list: { gap: 6, paddingVertical: 2 },
-  option: { minHeight: 36, minWidth: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, borderWidth: 1, borderColor: '#34343A', borderRadius: 6, backgroundColor: '#141416' },
+  map: { position: 'relative', overflow: 'hidden', borderRadius: Radius.card, borderWidth: 1, borderColor: Palette.border },
+  pin: { position: 'absolute', minWidth: 32, height: 32, borderRadius: Radius.small, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center', backgroundColor: Palette.accent, borderWidth: 1, borderColor: Palette.background },
+  pinText: { color: Palette.background, fontFamily: Typography.semibold, fontSize: 10, lineHeight: 16 },
+  list: { gap: 8, paddingVertical: 4 },
+  option: { minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, borderWidth: 1, borderColor: Palette.border, borderRadius: Radius.small, backgroundColor: Palette.surface },
 });

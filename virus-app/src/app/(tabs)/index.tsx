@@ -1,106 +1,66 @@
-import * as Device from 'expo-device';
 import { useState } from 'react';
 import type { LocationObject } from 'expo-location';
-import { ClassSchedule } from '@/components/class-schedule';
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SymbolView } from 'expo-symbols';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
+import { ClassSchedule } from '@/components/class-schedule';
 import { LocationCard } from '@/components/location-card';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth } from '@/constants/theme';
 
 export default function HomeScreen() {
   const [position, setPosition] = useState<LocationObject | null>(null);
   const [absent, setAbsent] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
-    <ThemedView style={[styles.container, absent && { backgroundColor: '#B91C1C' }]}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} style={styles.scrollView}>
-        {absent && <Text accessibilityRole="alert" style={styles.alert}>You are not at your scheduled class!</Text>}
-        <ThemedView style={[styles.heroSection, absent && { backgroundColor: 'transparent' }]}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            My day
-          </ThemedText>
-        </ThemedView>
-
-        <LocationCard onLocationChange={setPosition} />
-        <ClassSchedule position={position} onAbsent={setAbsent} />
-
-        <Link href="/lockdown" asChild>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar style="light" />
+      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <Text style={styles.appName}>Dandruff</Text>
+            <Text style={styles.tagline}>don&apos;t flake on your classes</Text>
+          </View>
           <Pressable
             accessibilityRole="button"
-            style={({ pressed }) => [styles.demoButton, pressed && styles.demoButtonPressed]}>
-            <Text style={styles.demoButtonText}>Lockdown demo</Text>
+            accessibilityLabel={settingsOpen ? 'Close settings' : 'Open settings'}
+            accessibilityState={{ expanded: settingsOpen }}
+            onPress={() => setSettingsOpen(value => !value)}
+            style={({ pressed }) => [styles.settingsButton, pressed && styles.pressed]}>
+            <SymbolView name={{ ios: 'gearshape', android: 'settings', web: 'settings' }} size={27} tintColor="#A7A7AE" />
           </Pressable>
-        </Link>
-
-        </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+        </View>
+        {absent && <Text accessibilityRole="alert" style={styles.alert}>You are not at your scheduled class!</Text>}
+        <View style={!settingsOpen && styles.hidden}>
+          <Text style={styles.settingsTitle}>Settings</Text>
+          <LocationCard onLocationChange={setPosition} />
+          <Link href="/lockdown" asChild>
+            <Pressable accessibilityRole="button" style={styles.demoButton}>
+              <Text style={styles.demoText}>Open Lockdown Demo</Text>
+            </Pressable>
+          </Link>
+        </View>
+        <ClassSchedule position={position} onAbsent={setAbsent} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  alert: { color: '#FFFFFF', fontSize: 22, fontWeight: 'bold', paddingTop: 20, textAlign: 'center' },
-  demoButton: {
-    backgroundColor: '#2563EB',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  demoButtonPressed: {
-    opacity: 0.75,
-  },
-  demoButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.four,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  safeArea: { flex: 1, backgroundColor: '#0B0B0C' },
+  screen: { flexGrow: 1, width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingHorizontal: 24, paddingTop: 28, paddingBottom: Math.max(BottomTabInset, 80) + 28 },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 },
+  headerText: { flex: 1 },
+  appName: { color: '#F5F5F7', fontSize: 38, lineHeight: 44, fontWeight: '700' },
+  tagline: { marginTop: 4, color: '#9B9BA2', fontSize: 18, lineHeight: 24 },
+  settingsButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  pressed: { opacity: 0.65 },
+  hidden: { display: 'none' },
+  settingsTitle: { color: '#F5F5F7', fontSize: 22, fontWeight: '600', marginVertical: 20 },
+  demoButton: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
+  demoText: { color: '#5A9CFF', fontSize: 16 },
+  alert: { color: '#FFFFFF', backgroundColor: '#B91C1C', padding: 16, borderRadius: 8, marginTop: 20, fontWeight: '600' },
 });

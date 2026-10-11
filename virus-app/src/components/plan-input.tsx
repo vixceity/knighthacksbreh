@@ -5,13 +5,18 @@ import { type ImportedClass } from './schedule-import';
 import { localDate, validDate } from '@/utils/attendance';
 import { useTheme } from '@/hooks/use-theme';
 
-export function PlanInput({ disabled, onPlan }: { disabled: boolean; onPlan: (plan: ImportedClass) => void }) {
+export function PlanInput({ disabled, onPlan, onBusyChange }: {
+  disabled: boolean;
+  onPlan: (plan: ImportedClass) => void;
+  onBusyChange?: (busy: boolean) => void;
+}) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const theme = useTheme();
   async function parse() {
     setBusy(true); setError('');
+    onBusyChange?.(true);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 85000);
     try {
@@ -28,7 +33,7 @@ export function PlanInput({ disabled, onPlan }: { disabled: boolean; onPlan: (pl
         || !['name', 'place', 'start', 'end'].every(key => typeof plan[key] === 'string')) throw new Error('Could not read the plan. Include a day, time, and location.');
       onPlan(plan); setText('');
     } catch (failure) { setError(failure instanceof Error && failure.name !== 'AbortError' ? failure.message : 'Request timed out. Try again.'); }
-    finally { clearTimeout(timer); setBusy(false); }
+    finally { clearTimeout(timer); setBusy(false); onBusyChange?.(false); }
   }
   return <View style={{ gap: 10 }}>
     <ThemedText type="smallBold">Add a plan</ThemedText>

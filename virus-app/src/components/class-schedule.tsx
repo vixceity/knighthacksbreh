@@ -1,12 +1,12 @@
 import { displayTime, parseTime } from '@/utils/time';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { Button, StyleSheet, TextInput, View } from 'react-native';
+import { Button, Keyboard, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SymbolView } from 'expo-symbols';
 import { ThemedText } from './themed-text';
-import { ThemedView } from './themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { ScheduleImport, type ImportedClass } from './schedule-import';
-import { Linking } from 'react-native';
 import { PlanInput } from './plan-input';
 import { BuildingLookup } from './building-lookup';
 import { type ClassEntry, type Position, attendance, validClass, overlaps } from '@/utils/attendance';
@@ -17,12 +17,13 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
   const theme = useTheme();
   const [classes, setClasses] = useState<ClassEntry[]>([]);
   const [ready, setReady] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(new Date());
   const [days, setDays] = useState<number[]>([1]);
   const [imports, setImports] = useState<ImportedClass[]>([]);
-  const [manual, setManual] = useState(false);
   const [details, setDetails] = useState(false);
   const [eventDate, setEventDate] = useState<string | undefined>();
   const [locationConfirmed, setLocationConfirmed] = useState(false);
@@ -58,7 +59,7 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
     if (await save([...classes, entry])) advanceImport();
   }
   function loadDraft(draft?: ImportedClass) {
-    setManual(false); setDetails(false);
+    setDetails(false);
     setEventDate(draft?.date);
     setLocationConfirmed(false);
     setDays(draft?.days ?? [1]);
@@ -69,65 +70,144 @@ export function ClassSchedule({ position, onAbsent }: { position: Position | nul
     const remaining = imports.slice(1);
     setImports(remaining);
     loadDraft(remaining[0]);
+    if (!remaining.length) setEditorOpen(false);
+  }
+  function closeEditor() {
+    if (saving) return;
+    Keyboard.dismiss();
+    setEditorOpen(false);
   }
   const labels = { name: 'Class name', place: 'Building / room', start: 'Start (AM/PM)', end: 'End (AM/PM)', latitude: 'Latitude', longitude: 'Longitude', radius: 'Attendance radius (meters)' };
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="subtitle">Schedule</ThemedText>
-      <ThemedText type="small">Repeats weekly in your device’s local time. Location is checked while Home is open. GPS checks the building area, not the room.</ThemedText>
-      {!ready && !error && <ThemedText>Loading schedule…</ThemedText>}
-      {ready && classes.length === 0 && <ThemedText>No classes saved yet.</ThemedText>}
+    <View style={styles.home}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Your classes</Text>
+        <Text style={styles.classCount}>{ready ? `${classes.length} ${classes.length === 1 ? 'class' : 'classes'}` : 'Loading...'}</Text>
+      </View>
+      <View style={styles.divider} />
+      {!ready && !error && <Text style={styles.secondaryText}>Loading schedule...</Text>}
+      {ready && classes.length === 0 && <View style={styles.emptyState}>
+        <Text style={styles.emptyTitle}>No classes yet</Text>
+        <Text style={styles.emptyBody}>Add your first class or import a schedule screenshot.</Text>
+      </View>}
       {classes.map(entry => {
         const status = attendance(entry, position, now);
-        return <View key={entry.id} style={styles.entry}>
-          <ThemedText type="smallBold">{entry.name} — {entry.place}</ThemedText>
-          <ThemedText type="small">{entry.date ? `${entry.date} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} · {displayTime(entry.start)}–{displayTime(entry.end)} · {entry.radius} m</ThemedText>
-          <ThemedText accessibilityLiveRegion="polite">{status === 'absent' ? 'Not at class — head to your classroom' : status === 'present' ? 'At class' : status === 'unknown' ? 'Unable to check — waiting for an accurate location' : 'Not in session'}</ThemedText>
-          <Button title={`Delete ${entry.name}`} disabled={saving} onPress={() => void save(classes.filter(item => item.id !== entry.id))} />
+        return <View key={entry.id} style={styles.classRow}>
+          <View style={styles.classInfo}>
+            <Text style={styles.emptyTitle}>{entry.name}</Text>
+            <Text style={styles.secondaryText}>{entry.place}</Text>
+            <Text style={styles.secondaryText}>{entry.date ? `${entry.date} (one time)` : entry.days.map(day => DAYS[day]).join(', ')} | {displayTime(entry.start)} - {displayTime(entry.end)}</Text>
+            <Text accessibilityLiveRegion="polite" style={[styles.secondaryText, status === 'absent' && styles.absentText, status === 'present' && styles.presentText]}>
+              {status === 'absent' ? 'Not at class - head to your classroom' : status === 'present' ? 'At class' : status === 'unknown' ? 'Waiting for an accurate location' : 'Not in session'}
+            </Text>
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${entry.name}`} disabled={saving || importing}
+            onPress={() => void save(classes.filter(item => item.id !== entry.id))}
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}>
+            <SymbolView name={{ ios: 'trash', android: 'delete', web: 'delete' }} size={22} tintColor="#A7A7AE" />
+          </Pressable>
         </View>;
       })}
-      <PlanInput disabled={!ready || saving || imports.length > 0} onPlan={plan => { setImports([plan]); loadDraft(plan); }} />
-      <ScheduleImport disabled={!ready || saving || imports.length > 0} onImport={items => { setImports(items); loadDraft(items[0]); }} />
-      {!imports.length && <Button title={manual ? "Close form" : "Add manually"} onPress={() => setManual(!manual)} />}
-      {(imports.length > 0 || manual) && <>
-      {imports.length > 0 && <View style={{ gap: 8 }}>
-        <ThemedText type="smallBold">Review event · {imports.length} remaining</ThemedText>
-        <ThemedText type="small">Campus: {imports[0].campus || 'Not detected'}</ThemedText>
-        <ThemedText type="small">{imports[0].locationStatus || 'Enter the building coordinates below.'}</ThemedText>
-        {!!imports[0].matchedAddress && <ThemedText type="small">Google Maps: {imports[0].matchedAddress}</ThemedText>}
-        <Button title="View map" disabled={!form.latitude.trim() || !form.longitude.trim() || !Number.isFinite(Number(form.latitude)) || !Number.isFinite(Number(form.longitude))} onPress={() => {
-          void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${form.latitude},${form.longitude}`)}`).catch(() => setError('Could not open Google Maps. Check coordinates manually.'));
-        }} />
-        <Button title={locationConfirmed ? 'Location confirmed ✓' : 'Confirm location'} onPress={() => setLocationConfirmed(true)} />
-        <Button title="Skip" disabled={saving} onPress={advanceImport} />
-        <Button title="Cancel import" disabled={saving} onPress={() => { setImports([]); loadDraft(); }} />
-      </View>}
-      <ThemedText type="smallBold">{imports.length ? 'Event details' : 'Add a class'}</ThemedText>
-      {imports.length > 0 && <BuildingLookup key={`${imports.length}:${imports[0]?.name}`}
-        initialCampus={imports[0]?.campus ?? ''} initialBuilding={imports[0]?.building ?? ''}
-        onFound={(latitude, longitude) => { setLocationConfirmed(false); setForm(previous => ({ ...previous, latitude, longitude })); }} />}
-      {eventDate && <ThemedText type="smallBold">{eventDate} ? One time</ThemedText>}
-      {!eventDate && <View style={styles.days}>{DAYS.map((day, index) => <Button key={day} title={`${days.includes(index) ? '✓ ' : ''}${day}`} onPress={() => setDays(previous => previous.includes(index) ? previous.filter(item => item !== index) : [...previous, index])} />)}</View>}
-      {imports.length > 0 && <ThemedText type="small">Extracted location: {form.place || 'Not readable — try another screenshot'}</ThemedText>}
-      <Button title={details ? "Hide location details" : "Location details"} onPress={() => setDetails(!details)} />
-      {(Object.keys(labels) as (keyof typeof labels)[]).filter(key => !(imports.length > 0 && key === 'place') && (details || !['latitude', 'longitude', 'radius'].includes(key))).map(key => <View key={key}>
-        <ThemedText type="small">{labels[key]}</ThemedText>
-        <TextInput accessibilityLabel={labels[key]} value={form[key]} onChangeText={value => { if (['place', 'latitude', 'longitude'].includes(key)) setLocationConfirmed(false); setForm(previous => ({ ...previous, [key]: value })); }}
-          autoCapitalize="none" style={[styles.input, { color: theme.text, backgroundColor: theme.background }]} />
-      </View>)}
-      <Button title="Use current location" disabled={!position || now.getTime() - position.timestamp > 30000} onPress={() => {
-        setLocationConfirmed(false);
-        if (position) setForm(previous => ({ ...previous, latitude: String(position.coords.latitude), longitude: String(position.coords.longitude) }));
-      }} />
-      {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
-      <Button title={saving ? 'Saving…' : 'Save'} disabled={!ready || saving} onPress={() => void add()} />
-      </>}
-    </ThemedView>
+      {!!error && !editorOpen && <Text accessibilityRole="alert" style={styles.absentText}>{error}</Text>}
+      <View style={styles.actions}>
+        <Pressable accessibilityRole="button" disabled={!ready || saving || importing}
+          onPress={() => { if (!imports.length) loadDraft(); setEditorOpen(true); }}
+          style={({ pressed }) => [styles.primaryButton, (pressed || !ready || saving || importing) && styles.pressed]}>
+          <SymbolView name={{ ios: 'plus', android: 'add', web: 'add' }} size={24} tintColor="#FFFFFF" />
+          <Text style={styles.primaryButtonText}>{imports.length ? 'Continue reviewing classes' : 'Add class'}</Text>
+        </Pressable>
+        <ScheduleImport disabled={!ready || saving || importing || imports.length > 0}
+          onImport={items => { setImports(items); loadDraft(items[0]); setEditorOpen(true); }}
+          onBusyChange={setImporting}
+          renderTrigger={(pick, disabled, busy) => (
+            <Pressable accessibilityRole="button" disabled={disabled} onPress={pick}
+              style={({ pressed }) => [styles.secondaryButton, (pressed || disabled) && styles.pressed]}>
+              <SymbolView name={{ ios: 'photo', android: 'image', web: 'image' }} size={21} tintColor="#5A9CFF" />
+              <Text style={styles.secondaryButtonText}>{busy ? 'Reading screenshot...' : 'Import schedule screenshot'}</Text>
+            </Pressable>
+          )} />
+      </View>
+      <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
+        <SafeAreaProvider style={[styles.modal, { backgroundColor: theme.background }]}>
+          <SafeAreaView style={styles.modal}>
+            <View style={styles.modalHeader}>
+              <ThemedText type="smallBold">{imports.length ? 'Review event' : 'Add class'}</ThemedText>
+              <Pressable accessibilityRole="button" accessibilityLabel="Close class editor" disabled={saving}
+                accessibilityState={{ disabled: saving }} hitSlop={8} onPress={closeEditor}
+                style={({ pressed }) => [styles.closeButton, (pressed || saving) && styles.pressed]}>
+                <View pointerEvents="none">
+                  <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={24} tintColor={theme.text} />
+                </View>
+              </Pressable>
+            </View>
+            <KeyboardAvoidingView style={styles.modal} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+              <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.editor}>
+                {!imports.length && <PlanInput disabled={!ready || saving || importing} onBusyChange={setImporting}
+                  onPlan={plan => { setImports([plan]); loadDraft(plan); }} />}
+                {imports.length > 0 && <View style={{ gap: 8 }}>
+                  <ThemedText type="smallBold">Review event · {imports.length} remaining</ThemedText>
+                  <ThemedText type="small">Campus: {imports[0].campus || 'Could not determine from screenshot'}</ThemedText>
+                  <ThemedText type="small">{imports[0].locationStatus || 'Enter the building coordinates below.'}</ThemedText>
+                  {!!imports[0].matchedAddress && <ThemedText type="small">Google Maps: {imports[0].matchedAddress}</ThemedText>}
+                  <Button title="Review pin in Google Maps" disabled={!form.latitude.trim() || !form.longitude.trim() || !Number.isFinite(Number(form.latitude)) || !Number.isFinite(Number(form.longitude))} onPress={() => {
+                    void Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${form.latitude},${form.longitude}`)}`).catch(() => setError('Could not open Google Maps. Check coordinates manually.'));
+                  }} />
+                  <Button title={locationConfirmed ? 'Location confirmed ✓' : 'I confirm this is my class building'} onPress={() => setLocationConfirmed(true)} />
+                  <Button title="Skip this class" disabled={saving} onPress={advanceImport} />
+                  <Button title="Discard remaining imports" disabled={saving} onPress={() => { setImports([]); loadDraft(); }} />
+                </View>}
+                <ThemedText type="smallBold">{imports.length ? 'Review and save class' : 'Add a class'}</ThemedText>
+                {imports.length > 0 && <BuildingLookup key={`${imports.length}:${imports[0]?.name}`}
+                  initialCampus={imports[0]?.campus ?? ''} initialBuilding={imports[0]?.building ?? ''}
+                  onFound={(latitude, longitude) => { setLocationConfirmed(false); setForm(previous => ({ ...previous, latitude, longitude })); }} />}
+                {eventDate && <ThemedText type="smallBold">{eventDate} | One time</ThemedText>}
+                {!eventDate && <View style={styles.days}>{DAYS.map((day, index) => <Button key={day} title={`${days.includes(index) ? '✓ ' : ''}${day}`} onPress={() => setDays(previous => previous.includes(index) ? previous.filter(item => item !== index) : [...previous, index])} />)}</View>}
+                {imports.length > 0 && <ThemedText type="small">Extracted location: {form.place || 'Not readable — try another screenshot'}</ThemedText>}
+                <Button title={details ? "Hide location details" : "Location details"} onPress={() => setDetails(value => !value)} />
+                {(Object.keys(labels) as (keyof typeof labels)[]).filter(key => !(imports.length > 0 && key === 'place') && (details || !['latitude', 'longitude', 'radius'].includes(key))).map(key => <View key={key}>
+                  <ThemedText type="small">{labels[key]}</ThemedText>
+                  <TextInput accessibilityLabel={labels[key]} value={form[key]} onChangeText={value => { if (['place', 'latitude', 'longitude'].includes(key)) setLocationConfirmed(false); setForm(previous => ({ ...previous, [key]: value })); }}
+                    autoCapitalize="none" style={[styles.input, { color: theme.text, backgroundColor: theme.background }]} />
+                </View>)}
+                <Button title="Use my current location for this class" disabled={!position || now.getTime() - position.timestamp > 30000} onPress={() => {
+                  setLocationConfirmed(false);
+                  if (position) setForm(previous => ({ ...previous, latitude: String(position.coords.latitude), longitude: String(position.coords.longitude) }));
+                }} />
+                {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
+                <Button title={saving ? 'Saving…' : 'Save class'} disabled={!ready || saving || importing} onPress={() => void add()} />
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        </SafeAreaProvider>
+      </Modal>
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  card: { alignSelf: 'stretch', padding: 20, borderRadius: 16, gap: 12 },
+  home: { flexGrow: 1 },
+  sectionHeader: { marginTop: 64, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 },
+  sectionTitle: { color: '#F5F5F7', fontSize: 27, lineHeight: 33, fontWeight: '700' },
+  classCount: { color: '#77777F', fontSize: 15, lineHeight: 20 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#2A2A2D', marginTop: 16 },
+  emptyState: { paddingTop: 34, paddingBottom: 42 },
+  emptyTitle: { color: '#D6D6DA', fontSize: 18, lineHeight: 24, fontWeight: '600' },
+  emptyBody: { marginTop: 8, maxWidth: 290, color: '#85858D', fontSize: 16, lineHeight: 23 },
+  secondaryText: { color: '#9B9BA2', fontSize: 14, lineHeight: 21 },
+  classRow: { flexDirection: 'row', gap: 12, paddingVertical: 20, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#2A2A2D' },
+  classInfo: { flex: 1, gap: 4 },
+  iconButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  absentText: { color: '#FCA5A5', fontSize: 14, lineHeight: 21 },
+  presentText: { color: '#86EFAC' },
+  actions: { marginTop: 'auto', paddingTop: 28, gap: 14 },
+  primaryButton: { minHeight: 54, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8, backgroundColor: '#2F80ED', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  primaryButtonText: { color: '#FFFFFF', fontSize: 18, lineHeight: 23, fontWeight: '600', flexShrink: 1 },
+  secondaryButton: { minHeight: 48, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  secondaryButtonText: { color: '#5A9CFF', fontSize: 16, lineHeight: 21, fontWeight: '500', flexShrink: 1 },
+  pressed: { opacity: 0.65 },
+  modal: { flex: 1 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 8, minHeight: 64, flexShrink: 0 },
+  closeButton: { width: 48, height: 48, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  editor: { width: '100%', maxWidth: 800, alignSelf: 'center', padding: 20, gap: 12 },
   days: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   input: { borderWidth: 1, borderColor: '#8C9BB0', borderRadius: 8, padding: 12, minHeight: 44 },
-  entry: { gap: 8, borderBottomWidth: 1, borderBottomColor: '#8C9BB0', paddingBottom: 12 },
 });

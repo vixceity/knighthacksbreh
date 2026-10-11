@@ -1,10 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { ActivityIndicator, Button, Image, Platform, View } from 'react-native';
 import { ThemedText } from './themed-text';
 
 export type ImportedClass = { date?: string; name: string; place: string; days: number[]; start: string; end: string; campus?: string; building?: string; latitude?: number | null; longitude?: number | null; matchedAddress?: string; locationStatus?: string };
-export function ScheduleImport({ onImport, disabled }: { onImport: (classes: ImportedClass[]) => void; disabled: boolean }) {
+export function ScheduleImport({ onImport, disabled, renderTrigger, onBusyChange }: {
+  onImport: (classes: ImportedClass[]) => void;
+  disabled: boolean;
+  renderTrigger?: (pick: () => void, disabled: boolean, busy: boolean) => ReactNode;
+  onBusyChange?: (busy: boolean) => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
@@ -20,6 +25,7 @@ export function ScheduleImport({ onImport, disabled }: { onImport: (classes: Imp
       if (!mime || !['image/png', 'image/jpeg', 'image/webp'].includes(mime)) throw new Error('Choose a PNG, JPEG, or WebP screenshot.');
       setPreview(asset.uri);
       setBusy(true);
+      onBusyChange?.(true);
       const base = process.env.EXPO_PUBLIC_SCHEDULE_API_URL || (Platform.OS === 'web' ? 'http://localhost:3001' : '');
       if (!base) throw new Error('Configure EXPO_PUBLIC_SCHEDULE_API_URL to your computer’s import server address, then restart Expo.');
       const controller = new AbortController();
@@ -40,14 +46,14 @@ export function ScheduleImport({ onImport, disabled }: { onImport: (classes: Imp
     } catch (failure) {
       setError(failure instanceof Error && failure.name !== 'AbortError' && failure.message !== 'Failed to fetch'
         ? failure.message : 'Could not reach the import server or the request timed out. Check that the server is running and retry.');
-    } finally { setBusy(false); }
+    } finally { setBusy(false); onBusyChange?.(false); }
   }
   return <View style={{ gap: 10 }}>
-    <ThemedText type="smallBold">Import schedule</ThemedText>
-    <ThemedText type="small">Screenshots are read by Gemini. Review before saving.</ThemedText>
-    <Button title={busy ? 'Reading screenshot…' : 'Choose screenshot'} disabled={busy || disabled} onPress={() => void pick()} />
+    {!renderTrigger && <ThemedText type="smallBold">Import schedule</ThemedText>}
+    {!renderTrigger && <ThemedText type="small">Screenshots are read by Gemini. Review before saving.</ThemedText>}
+    {renderTrigger ? renderTrigger(() => void pick(), busy || disabled, busy) : <Button title={busy ? 'Reading screenshot…' : 'Choose schedule screenshot'} disabled={busy || disabled} onPress={() => void pick()} />}
     {busy && <ActivityIndicator accessibilityLabel="Reading schedule" />}
-    {preview && <Image source={{ uri: preview }} resizeMode="contain" accessibilityLabel="Selected schedule screenshot" style={{ width: '100%', height: 180 }} />}
-    {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
+    {preview && !renderTrigger && <Image source={{ uri: preview }} resizeMode="contain" accessibilityLabel="Selected schedule screenshot" style={{ width: '100%', height: 180 }} />}
+    {!!error && <ThemedText accessibilityRole="alert" style={renderTrigger && { color: '#FCA5A5' }}>{error}</ThemedText>}
   </View>;
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Platform, TextInput, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { ThemedText } from './themed-text';
 import { type ImportedClass } from './schedule-import';
 import { localDate, validDate } from '@/utils/attendance';
@@ -39,8 +39,17 @@ export function PlanInput({ disabled, onPlan, onBusyChange }: {
     <ThemedText type="smallBold">Add a plan</ThemedText>
     <ThemedText type="small">Include a place, day, and time.</ThemedText>
     <TextInput multiline accessibilityLabel="Your plan" editable={!busy && !disabled} value={text} onChangeText={setText} maxLength={2000}
-      style={{ color: theme.text, borderColor: '#8C9BB0', borderWidth: 1, padding: 12, borderRadius: 8, minHeight: 90 }} />
-    <Button title={busy ? 'Reading plan…' : 'Review plan'} disabled={disabled || busy || !text.trim()} onPress={() => void parse()} />
+      placeholderTextColor="#77777F" style={{ color: theme.text, backgroundColor: '#141416', borderColor: '#34343A', borderWidth: 1, padding: 12, borderRadius: 8, minHeight: 90 }} />
+    <Pressable accessibilityRole="button" disabled={disabled || busy || !text.trim()} onPress={() => void parse()}
+      style={({ pressed }) => [styles.button, (pressed || disabled || busy || !text.trim()) && styles.dimmed]}>
+      <Text style={styles.buttonText}>{busy ? 'Reading plan…' : 'Review plan'}</Text>
+    </Pressable>
     {!!error && <ThemedText accessibilityRole="alert">{error}</ThemedText>}
   </View>;
 }
+
+const styles = {
+  button: { minHeight: 46, alignItems: 'center' as const, justifyContent: 'center' as const, paddingHorizontal: 16, borderRadius: 6, backgroundColor: '#2F80ED' },
+  buttonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' as const },
+  dimmed: { opacity: 0.5 },
+};

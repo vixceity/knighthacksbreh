@@ -2,7 +2,7 @@
 
 From `virus-app`, copy `server/.env.example` to `server/.env` and set `GEMINI_API_KEY` in that file. Never put that key in an EXPO_PUBLIC variable. Create a Gemini API key in Google AI Studio and ensure your project has available quota.
 
-Run `npm.cmd run schedule-server` in one terminal and `npm.cmd run web` in another. On Home choose a screenshot, review each extracted class, add its building coordinates, and save it. Existing classes are preserved. You can skip classes or discard the remaining import. Nothing is saved until you choose Save class.
+Run `npm.cmd run schedule-server` in one terminal and `npm.cmd run web` in another. On Home choose a screenshot and review each extracted class. UCF main-campus building codes and names are matched to preset locations automatically. If Gemini cannot identify a building, choose a pin on the campus map. Unknown building names are rejected with an error. Existing classes are preserved; you can skip classes or discard the remaining import. Nothing is saved until you choose Save class.
 
 For a phone on your local network, set `SCHEDULE_HOST=0.0.0.0` in `server/.env`, copy `.env.example` to `.env`, and set `EXPO_PUBLIC_SCHEDULE_API_URL=http://YOUR_COMPUTER_LAN_IP:3001`. Restart both processes. Allow the local server through your firewall if needed. For a different web port, add its exact origin to `SCHEDULE_ALLOWED_ORIGINS`.
 
@@ -10,6 +10,10 @@ This server is for local development. Do not expose it publicly without authenti
 
 Implementation references: https://ai.google.dev/gemini-api/docs/image-understanding and https://ai.google.dev/gemini-api/docs/structured-output.
 
+<<<<<<< Updated upstream
 Automatic building coordinates: Gemini extracts campus clues and building names from the screenshot. Set GOOGLE_MAPS_API_KEY in server/.env to a server key with Places API (New) enabled and billing configured. Building names are looked up with Google Places Text Search. Ambiguous or unavailable matches remain blank. Users must review the suggested location in Google Maps and confirm it before saving. The Gemini key alone does not enable Places lookups.
 
 When a plan or screenshot omits the college, it defaults to UCF Main Campus. Explicit colleges are preserved.
+=======
+Building locations: preset UCF building names, aliases, addresses, and coordinates are stored in `src/constants/ucf-buildings.json`. Add new aliases and buildings there so schedule imports and map pins stay in sync. The import server only needs `GEMINI_API_KEY` for screenshot reading.
+>>>>>>> Stashed changes

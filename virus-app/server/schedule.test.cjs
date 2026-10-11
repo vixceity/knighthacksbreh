@@ -35,8 +35,8 @@ test('rejects untrusted origins and non-image inputs before AI call', async () =
     assert.equal((await post({ image: 'https://example.com/image.png' })).status, 400);
   });
 });
-test('extracts structured classes through a mocked AI response', async () => {
-  const classes = [{ name: 'Math', place: 'Hall 1', days: [1, 3], start: '10:00', end: '11:00' }];
+test('extracts structured classes and applies UCF preset coordinates', async () => {
+  const classes = [{ name: 'Math', place: 'MSB 0260', campus: 'UCF', building: 'MSB', days: [1, 3], start: '10:00', end: '11:00' }];
   await run({ apiKey: 'test', fetchImpl: async (_url, options) => {
     const request = JSON.parse(options.body);
     assert.match(_url, /^https:\/\/generativelanguage.googleapis.com\/v1beta\/models\/.+:generateContent$/);
@@ -48,7 +48,19 @@ test('extracts structured classes through a mocked AI response', async () => {
     const response = await post({ image }); assert.equal(response.status, 200);
     const data = await response.json();
     assert.equal(data.classes[0].name, 'Math');
-    assert.equal(data.classes[0].latitude, null);
+    assert.equal(data.classes[0].building, 'MSB');
+    assert.equal(data.classes[0].latitude, 28.5995897);
+    assert.equal(data.classes[0].longitude, -81.2004643);
+  });
+});
+test('rejects class buildings outside the UCF catalog with a clear error', async () => {
+  const classes = [{ name: 'Math', place: 'Science Hall 101', campus: 'UCF', building: 'Science Hall', days: [1], start: '10:00', end: '11:00' }];
+  await run({ apiKey: 'test', fetchImpl: async () => Response.json({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ classes }) }] } }] }) }, async post => {
+    const response = await post({ image });
+    assert.equal(response.status, 422);
+    const data = await response.json();
+    assert.match(data.error, /Science Hall/);
+    assert.match(data.error, /UCF building list/);
   });
 });
 test('refusal or malformed output never becomes a schedule', async () => {

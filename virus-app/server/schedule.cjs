@@ -1,4 +1,5 @@
 const http = require('node:http');
+const { Buffer } = require('node:buffer');
 const { resolveLocations } = require('./locations.cjs');
 const schema = {
   type: 'object', additionalProperties: false, required: ['classes'], properties: {
@@ -6,8 +7,8 @@ const schema = {
       type: 'object', additionalProperties: false, required: ['name', 'place', 'days', 'start', 'end', 'campus', 'building'],
       properties: {
         name: { type: 'string' }, place: { type: 'string' },
-        campus: { type: 'string', description: 'Identify university and campus from screenshot context. A UCF schedule combining codes ENG1, ENG2, MSB, CB2, HS1 and BA1 indicates University of Central Florida, Main Campus, Orlando. A single generic course or building code is insufficient. Preserve explicit campus differences; leave ambiguous campus blank.' },
-        building: { type: 'string', description: 'Building name without room number. Expand abbreviations only if unambiguous for the identified campus. Empty for online classes or unclear buildings.' },
+        campus: { type: 'string', description: 'This app is for University of Central Florida main campus. Return University of Central Florida when the schedule is UCF; otherwise leave blank.' },
+        building: { type: 'string', description: 'Return the UCF building code or name, without the room number. Keep the room in place. Leave blank if the building cannot be identified.' },
         days: { type: 'array', items: { type: 'integer' } },
         start: { type: 'string' }, end: { type: 'string' },
       },
@@ -106,6 +107,9 @@ function createServer({ apiKey = process.env.GEMINI_API_KEY, fetchImpl = fetch }
       }
       if (!validResult(data)) return send(422, { error: isPlan ? 'Could not read the plan. Include a place, day, and time.' : 'Invalid extracted schedule. Try another screenshot.' });
       data.classes = await resolveLocations(data.classes.map(defaultEndTime));
+      const unknown = [...new Set(data.classes.filter(item => item.locationError).map(item =>
+        item.locationStatus.replace(/^Unknown UCF building:\s*/, '').replace(/^This app only supports UCF buildings, not\s*/, '')) )];
+      if (unknown.length) return send(422, { error: `These locations are not in the UCF building list: ${unknown.join(', ')}. Check the screenshot and try again.` });
       send(200, data);
     } catch {
       if (!res.headersSent) send(502, { error: isPlan ? 'Plan reading timed out or the AI service is unreachable. Please retry.' : 'Screenshot reading timed out or the AI service is unreachable. Please retry.' });
